@@ -1,6 +1,6 @@
 # sat-contracts — Smart Ass Trading (SAT)
 
-Source for the SAT smart contracts deployed on WAX mainnet. **The contracts are not audited yet.** See [AUDIT-SCOPE.md](AUDIT-SCOPE.md).
+Source for the SAT smart contracts deployed on WAX mainnet. See [AUDIT-SCOPE.md](AUDIT-SCOPE.md) for what is in scope, and [AUDIT.md](AUDIT.md) for the independent review of 23 October 2026 (WASM unchanged; hashes still match mainnet).
 
 | Account | Source | Deployed code hash (sha256) |
 |---|---|---|

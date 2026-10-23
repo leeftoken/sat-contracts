@@ -1,6 +1,6 @@
 # Audit scope — SAT contracts (WAX mainnet)
 
-Status: deployed with low caps, **not audited yet**. Source in this repo builds byte-identical to the on-chain wasm (CDT 4.1.1).
+Status: deployed with low caps. Source in this repo builds byte-identical to the on-chain wasm (CDT 4.1.1). Independent review: [AUDIT.md](AUDIT.md) (23 Oct 2026). WASM was not patched in that review so hashes stay reproducible.
 
 ## In scope
 | Contract | Account | Source | Code sha256 |
