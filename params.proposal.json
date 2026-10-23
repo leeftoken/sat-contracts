@@ -1,0 +1,18 @@
+{
+  "_status": "Deployed on WAX mainnet Oct 23 2026 (see contracts/MAINNET.md) with limits max_in_bps 100 / daily_cap_bps 500; USDT plans use wrap.alcor 6 decimals (0.975000 USDT) as ids 11-13. Prices reference WAX $0.004568 (CoinGecko, Oct 23 2026) and $0.013 per Telegram Star (developer payout rate).",
+  "accounts_mainnet": {
+    "contract": "smartatrader", "sat_token": "sattoken1111", "admin": "smartaadmin1",
+    "fee_recipient": "smartafees11", "bot": "smartabot111",
+    "multisig": { "threshold": 2, "signers": ["danishcrypto@active", "smart.ass@active", "leef@active"], "weight_each": 1 }
+  },
+  "sat": { "max_supply": "100000000.0000 SAT", "decimals": 4, "inflation": "none (max supply fixed in sat.token)" },
+  "allocation_bps": { "locked_liquidity": 3500, "user_rewards_4y": 2500, "treasury_msig": 1500, "team_vesting_12m_cliff_36m": 1500, "community_leef_holders": 1000 },
+  "revenue_split_bps": { "satlp": 3000, "leeflp": 2000, "ops": 3000, "rewards": 1000, "reserve": 1000 },
+  "plans": [
+    { "id": 1, "name": "Basic 30d", "stars": 75, "usd": 0.975, "usdt": "0.9750 USDT", "wax": "213.00000000 WAX", "days": 30 },
+    { "id": 2, "name": "Pro 30d", "stars": 150, "usd": 1.95, "usdt": "1.9500 USDT", "wax": "427.00000000 WAX", "days": 30 },
+    { "id": 3, "name": "Pro 365d", "stars": 1500, "usd": 19.50, "usdt": "19.5000 USDT", "wax": "4269.00000000 WAX", "days": 365 }
+  ],
+  "sat_discount_bps": 2000,
+  "limits": { "max_in_bps": 500, "daily_cap_bps": 2000, "lock_secs": 1325419200 }
+}

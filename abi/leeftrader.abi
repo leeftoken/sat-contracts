@@ -1,0 +1,781 @@
+{
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT ",
+    "version": "eosio::abi/1.2",
+    "types": [],
+    "structs": [
+        {
+            "name": "addlp",
+            "base": "",
+            "fields": [
+                {
+                    "name": "bucket",
+                    "type": "name"
+                },
+                {
+                    "name": "pool_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "a",
+                    "type": "extended_asset"
+                },
+                {
+                    "name": "b",
+                    "type": "extended_asset"
+                },
+                {
+                    "name": "tick_lower",
+                    "type": "int32"
+                },
+                {
+                    "name": "tick_upper",
+                    "type": "int32"
+                },
+                {
+                    "name": "min_a",
+                    "type": "asset"
+                },
+                {
+                    "name": "min_b",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "bucketbal",
+            "base": "",
+            "fields": [
+                {
+                    "name": "balance",
+                    "type": "extended_asset"
+                },
+                {
+                    "name": "day",
+                    "type": "uint32"
+                },
+                {
+                    "name": "spent_today",
+                    "type": "int64"
+                }
+            ]
+        },
+        {
+            "name": "buyback",
+            "base": "",
+            "fields": [
+                {
+                    "name": "bucket",
+                    "type": "name"
+                },
+                {
+                    "name": "in",
+                    "type": "extended_asset"
+                },
+                {
+                    "name": "swap",
+                    "type": "name"
+                },
+                {
+                    "name": "pool_path",
+                    "type": "string"
+                },
+                {
+                    "name": "min_out",
+                    "type": "extended_asset"
+                }
+            ]
+        },
+        {
+            "name": "checkout",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "collectfees",
+            "base": "",
+            "fields": [
+                {
+                    "name": "actor",
+                    "type": "name"
+                },
+                {
+                    "name": "lp_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "max_a",
+                    "type": "asset"
+                },
+                {
+                    "name": "max_b",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "config",
+            "base": "",
+            "fields": [
+                {
+                    "name": "admin",
+                    "type": "name"
+                },
+                {
+                    "name": "bot",
+                    "type": "name"
+                },
+                {
+                    "name": "fee_recipient",
+                    "type": "name"
+                },
+                {
+                    "name": "swap",
+                    "type": "name"
+                },
+                {
+                    "name": "paused",
+                    "type": "bool"
+                },
+                {
+                    "name": "max_in_bps",
+                    "type": "uint16"
+                },
+                {
+                    "name": "daily_cap_bps",
+                    "type": "uint16"
+                },
+                {
+                    "name": "lock_secs",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "dest",
+            "base": "",
+            "fields": [
+                {
+                    "name": "account",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "extended_symbol",
+            "base": "",
+            "fields": [
+                {
+                    "name": "sym",
+                    "type": "symbol"
+                },
+                {
+                    "name": "contract",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "init",
+            "base": "",
+            "fields": [
+                {
+                    "name": "admin",
+                    "type": "name"
+                },
+                {
+                    "name": "bot",
+                    "type": "name"
+                },
+                {
+                    "name": "fee_recipient",
+                    "type": "name"
+                },
+                {
+                    "name": "swap_contract",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "loglp",
+            "base": "",
+            "fields": [
+                {
+                    "name": "pool_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "a",
+                    "type": "extended_asset"
+                },
+                {
+                    "name": "b",
+                    "type": "extended_asset"
+                },
+                {
+                    "name": "unlock",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "logrevenue",
+            "base": "",
+            "fields": [
+                {
+                    "name": "from",
+                    "type": "name"
+                },
+                {
+                    "name": "amount",
+                    "type": "extended_asset"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "logsub",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "plan",
+                    "type": "uint64"
+                },
+                {
+                    "name": "expires",
+                    "type": "time_point_sec"
+                }
+            ]
+        },
+        {
+            "name": "logswap",
+            "base": "",
+            "fields": [
+                {
+                    "name": "bucket",
+                    "type": "name"
+                },
+                {
+                    "name": "min_out",
+                    "type": "extended_asset"
+                },
+                {
+                    "name": "got",
+                    "type": "extended_asset"
+                }
+            ]
+        },
+        {
+            "name": "lprow",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "pool_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "tick_lower",
+                    "type": "int32"
+                },
+                {
+                    "name": "tick_upper",
+                    "type": "int32"
+                },
+                {
+                    "name": "unlock",
+                    "type": "uint32"
+                },
+                {
+                    "name": "bucket",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "lpwithdraw",
+            "base": "",
+            "fields": [
+                {
+                    "name": "bucket",
+                    "type": "name"
+                },
+                {
+                    "name": "amount",
+                    "type": "extended_asset"
+                }
+            ]
+        },
+        {
+            "name": "pause",
+            "base": "",
+            "fields": [
+                {
+                    "name": "actor",
+                    "type": "name"
+                },
+                {
+                    "name": "paused",
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "payout",
+            "base": "",
+            "fields": [
+                {
+                    "name": "bucket",
+                    "type": "name"
+                },
+                {
+                    "name": "to",
+                    "type": "name"
+                },
+                {
+                    "name": "quantity",
+                    "type": "extended_asset"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "pending",
+            "base": "",
+            "fields": [
+                {
+                    "name": "bucket",
+                    "type": "name"
+                },
+                {
+                    "name": "min_out",
+                    "type": "extended_asset"
+                },
+                {
+                    "name": "before",
+                    "type": "int64"
+                }
+            ]
+        },
+        {
+            "name": "plan",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "price",
+                    "type": "extended_asset"
+                },
+                {
+                    "name": "days",
+                    "type": "uint32"
+                },
+                {
+                    "name": "active",
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "poolok",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "setbot",
+            "base": "",
+            "fields": [
+                {
+                    "name": "bot",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "setdest",
+            "base": "",
+            "fields": [
+                {
+                    "name": "account",
+                    "type": "name"
+                },
+                {
+                    "name": "allowed",
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "setfeercpt",
+            "base": "",
+            "fields": [
+                {
+                    "name": "fee_recipient",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "setlimits",
+            "base": "",
+            "fields": [
+                {
+                    "name": "max_in_bps",
+                    "type": "uint16"
+                },
+                {
+                    "name": "daily_cap_bps",
+                    "type": "uint16"
+                },
+                {
+                    "name": "lock_secs",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "setplan",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "price",
+                    "type": "extended_asset"
+                },
+                {
+                    "name": "days",
+                    "type": "uint32"
+                },
+                {
+                    "name": "active",
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "setpool",
+            "base": "",
+            "fields": [
+                {
+                    "name": "pool_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "allowed",
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "setsplit",
+            "base": "",
+            "fields": [
+                {
+                    "name": "buckets",
+                    "type": "name[]"
+                },
+                {
+                    "name": "bps",
+                    "type": "uint16[]"
+                }
+            ]
+        },
+        {
+            "name": "setswap",
+            "base": "",
+            "fields": [
+                {
+                    "name": "contract",
+                    "type": "name"
+                },
+                {
+                    "name": "allowed",
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "settoken",
+            "base": "",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "extended_symbol"
+                },
+                {
+                    "name": "allowed",
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "split",
+            "base": "",
+            "fields": [
+                {
+                    "name": "bucket",
+                    "type": "name"
+                },
+                {
+                    "name": "bps",
+                    "type": "uint16"
+                },
+                {
+                    "name": "ord",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "sub",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "plan",
+                    "type": "uint64"
+                },
+                {
+                    "name": "expires",
+                    "type": "time_point_sec"
+                }
+            ]
+        },
+        {
+            "name": "swapc",
+            "base": "",
+            "fields": [
+                {
+                    "name": "contract",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "token",
+            "base": "",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "extended_symbol"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "name": "addlp",
+            "type": "addlp",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "buyback",
+            "type": "buyback",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "checkout",
+            "type": "checkout",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "collectfees",
+            "type": "collectfees",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "init",
+            "type": "init",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "loglp",
+            "type": "loglp",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "logrevenue",
+            "type": "logrevenue",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "logsub",
+            "type": "logsub",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "logswap",
+            "type": "logswap",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "lpwithdraw",
+            "type": "lpwithdraw",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "pause",
+            "type": "pause",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "payout",
+            "type": "payout",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setbot",
+            "type": "setbot",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setdest",
+            "type": "setdest",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setfeercpt",
+            "type": "setfeercpt",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setlimits",
+            "type": "setlimits",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setplan",
+            "type": "setplan",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setpool",
+            "type": "setpool",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setsplit",
+            "type": "setsplit",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setswap",
+            "type": "setswap",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "settoken",
+            "type": "settoken",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "buckets",
+            "type": "bucketbal",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "config",
+            "type": "config",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "dests",
+            "type": "dest",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "lps",
+            "type": "lprow",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "pending",
+            "type": "pending",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "plans",
+            "type": "plan",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "pools",
+            "type": "poolok",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "splits",
+            "type": "split",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "subs",
+            "type": "sub",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "swaps",
+            "type": "swapc",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "tokens",
+            "type": "token",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": [],
+    "action_results": []
+}

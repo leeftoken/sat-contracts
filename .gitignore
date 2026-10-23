@@ -1,0 +1,6 @@
+build/
+*.env
+.env*
+keys*.json
+*KEYS*
+*.log
