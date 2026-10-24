@@ -19,11 +19,13 @@ Code: `contracts/` — `sat.token/`, `leeftrader/`, `mocks/mockswap/` (test only
 ## Existing LEEF contracts (researched on-chain, read-only)
 | Account | What it is | Actions |
 |---|---|---|
-| `leefmaincorp` | LEEF token, standard eosio.token ABI. Max 420,000,000,000.0000 LEEF, supply 132,000,000,000.0000 (get_currency_stats, Oct 22 2026) | create, issue, retire, transfer, open, close |
-| `leefrewarder` | NFT staking rewarder | init, calcrewards, claim |
+| `leefmaincorp` | LEEF token, standard eosio.token ABI. Max 420,000,000,000.0000 LEEF, supply 132,000,000,000.0000 (`get_currency_stats`, 24 Oct 2026, wax.greymass.com) | create, issue, retire, transfer, open, close |
+| `leefstakerio` | LEEF staking. Tables `stakerlist`, `stakeralist`, `roomlist`. leeftoken.io calls this the staking contract. | regstaker, roomstake, roomunstake, unstake, unstakea, transfer, plus admin/ban actions |
+| `leefrewarder` | Reward calculator. Tables `accounts`, `assets`, `config`, `rewards`, `stakerlist`. leeftoken.io calls this the passive reward contract. | init, calcrewards, claim |
+| `leefhopperio` | leeftoken.io calls this the active reward contract. `get_abi` returned no ABI on 24 Oct 2026. Do not invent actions. | none published |
 No public source repo for leeftoken.io contracts was found; only the on-chain ABIs above. SAT and leeftrader are
 designed as a sub-system next to these: they only *use* LEEF via standard transfers and never need permissions on
-`leefmaincorp` or `leefrewarder`.
+`leefmaincorp`, `leefstakerio`, `leefrewarder`, or `leefhopperio`.
 
 ## Alcor native LP lock (verified Oct 22 2026)
 Source: https://docs.alcor.exchange/alcor-swap/locking-liquidity and the live `swap.alcor` ABI/tables.
