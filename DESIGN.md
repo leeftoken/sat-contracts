@@ -98,7 +98,7 @@ Hermes setup skill: `skills/leef-system-setup/SKILL.md`.
 - Drawdown: bot values the treasury each run; at -10% it pushes `pause(bot, true)`; only the admin multisig can unpause.
 - Telegram stays read-only: it may display tables/logs but never triggers actions.
 - Stars revenue never reaches the chain directly: Fragment → TON → manual conversion → transfer to leeftrader with memo `fund`.
-### leef-trader platform (https://github.com/NostrDanish/leef-trader, https://leef-trader.vercel.app/)
+### leef-trader platform (https://github.com/leeftoken/leef-trader, https://leef-trader.vercel.app/)
 - Read `get_table_rows` on `leeftrader`: `subs` (subscription status per user), `buckets`, `lps`, `plans`, `config`.
 - Read history (Hyperion `get_actions` filter `leeftrader:logrevenue,logsub,logswap,loglp`) for activity feeds.
 - Subscriptions from the web: user signs `transfer(user → leeftrader, price, "sub:<plan_id>")` in their own wallet.
