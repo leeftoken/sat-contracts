@@ -1,6 +1,6 @@
 # sat-contracts — Smart Ass Trading (SAT)
 
-Source for the SAT smart contracts deployed on WAX mainnet. **The contracts are not audited yet.** See [AUDIT-SCOPE.md](AUDIT-SCOPE.md).
+Source for the SAT smart contracts deployed on WAX mainnet. **Not a firm audit.** Source+mainnet review: [AUDIT-REPORT.md](AUDIT-REPORT.md). Scope sheet: [AUDIT-SCOPE.md](AUDIT-SCOPE.md).
 
 | Account | Source | Deployed code hash (sha256) |
 |---|---|---|
@@ -8,6 +8,8 @@ Source for the SAT smart contracts deployed on WAX mainnet. **The contracts are 
 | `smartatrader` | `leeftrader/leeftrader.cpp` | `4ed7d02a7f7107dc03d9c9df61b77fd4927368ea95b669e0d0ba228f1ee729c4` |
 
 `mocks/mockswap` is a test stand-in for `swap.alcor` and is not deployed on mainnet.
+
+**Audit (2026-11-09):** [AUDIT-REPORT.md](AUDIT-REPORT.md). Source matches live WASM; top risks are live key/permission centralization, 80M unissued SAT, bot `@active` bypassing `linkauth`, and a same-token `buyback`/`checkout` logic bug. Contract logic is unchanged.
 
 ## Reproducible build
 Requires AntelopeIO CDT **4.1.1**.
@@ -26,6 +28,6 @@ curl -s -d '{"account_name":"smartatrader","code_as_wasm":1}' https://wax.greyma
 ## Tests
 - `tests/run_tests.sh`: local throwaway nodeos chain (needs AntelopeIO Spring).
 - `tests/testnet_run.sh`: WAX testnet only, refuses other RPCs.
-- `client/`: JS client helpers + `node --test client/leeftrader-client.test.mjs`.
+- `client/`: JS client helpers + `node client/leeftrader-client.test.mjs`.
 
 Design notes: [DESIGN.md](DESIGN.md). Proposed parameters: `params.proposal.json`.
