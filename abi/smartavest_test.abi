@@ -1,0 +1,193 @@
+{
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT ",
+    "version": "eosio::abi/1.2",
+    "types": [],
+    "structs": [
+        {
+            "name": "claim",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "clock_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "now_sec",
+                    "type": "uint32"
+                },
+                {
+                    "name": "active",
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "config_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "admin",
+                    "type": "name"
+                },
+                {
+                    "name": "token_contract",
+                    "type": "name"
+                },
+                {
+                    "name": "token_symbol",
+                    "type": "symbol"
+                },
+                {
+                    "name": "inited",
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "init",
+            "base": "",
+            "fields": [
+                {
+                    "name": "admin",
+                    "type": "name"
+                },
+                {
+                    "name": "token_contract",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "openstream",
+            "base": "",
+            "fields": [
+                {
+                    "name": "beneficiary",
+                    "type": "name"
+                },
+                {
+                    "name": "category",
+                    "type": "name"
+                },
+                {
+                    "name": "start",
+                    "type": "uint32"
+                },
+                {
+                    "name": "cliff_secs",
+                    "type": "uint32"
+                },
+                {
+                    "name": "duration_secs",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "setnow",
+            "base": "",
+            "fields": [
+                {
+                    "name": "t",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "stream_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "beneficiary",
+                    "type": "name"
+                },
+                {
+                    "name": "category",
+                    "type": "name"
+                },
+                {
+                    "name": "total",
+                    "type": "int64"
+                },
+                {
+                    "name": "claimed",
+                    "type": "int64"
+                },
+                {
+                    "name": "start",
+                    "type": "uint32"
+                },
+                {
+                    "name": "cliff_secs",
+                    "type": "uint32"
+                },
+                {
+                    "name": "duration_secs",
+                    "type": "uint32"
+                },
+                {
+                    "name": "created_at",
+                    "type": "uint32"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "name": "claim",
+            "type": "claim",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "init",
+            "type": "init",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "openstream",
+            "type": "openstream",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setnow",
+            "type": "setnow",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "config",
+            "type": "config_row",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "streams",
+            "type": "stream_row",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "testclock",
+            "type": "clock_row",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": [],
+    "action_results": []
+}

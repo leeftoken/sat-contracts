@@ -30,4 +30,13 @@ curl -s -d '{"account_name":"smartatrader","code_as_wasm":1}' https://wax.greyma
 - `tests/testnet_run.sh`: WAX testnet only, refuses other RPCs.
 - `client/`: JS client helpers + `node client/leeftrader-client.test.mjs`.
 
+
+## smartavest (not deployed)
+
+Vesting vault in [`smartavest/`](smartavest/). **Not audited. Not deployed. Do not create a mainnet account for it.**
+
+`smartavest/sat.token/` is a local test token for `smartavest/tests/run_tests.sh` only. It is not `sattoken1111`. Do not replace `sat.token/` or `leeftrader/` with anything from `smartavest/`.
+
+Local Spring 1.2.2 suite, 2026-11-09: 83 passed, 0 failed. Build with `cd smartavest && ./build.sh` (CDT 4.1.1). Production wasm has no `setnow`.
+
 Design notes: [DESIGN.md](DESIGN.md). Proposed parameters: `params.proposal.json`.
