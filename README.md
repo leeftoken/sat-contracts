@@ -40,3 +40,11 @@ Vesting vault in [`smartavest/`](smartavest/). **Not audited. Not deployed. Do n
 Local Spring 1.2.2 suite, 2026-11-09: 83 passed, 0 failed. Build with `cd smartavest && ./build.sh` (CDT 4.1.1). Production wasm has no `setnow`.
 
 Design notes: [DESIGN.md](DESIGN.md). Proposed parameters: `params.proposal.json`.
+
+## smartastake (not deployed)
+
+Staking and bounded governance in [`smartastake/`](smartastake/). **Not audited. Not deployed. Do not create a mainnet account for it.**
+
+`smartastake/mocks/` is a local test token, a trader stand-in, and a tiny bios for RAM. It is not `sattoken1111` or `smartatrader`. Do not replace `sat.token/` or `leeftrader/` with anything from `smartastake/`.
+
+Local Spring 1.2.2 suite, 2026-11-09: 22 checks passed. Build with `cd smartastake && ./build.sh` (CDT 4.1.1). Production wasm has no `settime`. Checked-in ABIs: `abi/smartastake.abi`, `abi/smartastake_test.abi`. The trader still needs the `setgov` patch in [smartastake/docs/TRADER_PATCH.md](smartastake/docs/TRADER_PATCH.md) before a passed split or limit change can execute on `smartatrader`. That patch is not applied to `leeftrader/` in this commit.

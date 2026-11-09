@@ -1,0 +1,991 @@
+{
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT ",
+    "version": "eosio::abi/1.2",
+    "types": [],
+    "structs": [
+        {
+            "name": "ballot_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "voter",
+                    "type": "name"
+                },
+                {
+                    "name": "support",
+                    "type": "bool"
+                },
+                {
+                    "name": "weight",
+                    "type": "int64"
+                }
+            ]
+        },
+        {
+            "name": "claim",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "claim_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "account",
+                    "type": "name"
+                },
+                {
+                    "name": "amount",
+                    "type": "int64"
+                }
+            ]
+        },
+        {
+            "name": "claimdrop",
+            "base": "",
+            "fields": [
+                {
+                    "name": "account",
+                    "type": "name"
+                },
+                {
+                    "name": "drop_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "amount",
+                    "type": "int64"
+                },
+                {
+                    "name": "proof",
+                    "type": "checksum256[]"
+                }
+            ]
+        },
+        {
+            "name": "compound",
+            "base": "",
+            "fields": [
+                {
+                    "name": "account",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "config_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "admin",
+                    "type": "name"
+                },
+                {
+                    "name": "token_contract",
+                    "type": "name"
+                },
+                {
+                    "name": "token_symbol",
+                    "type": "symbol"
+                },
+                {
+                    "name": "guardian",
+                    "type": "name"
+                },
+                {
+                    "name": "trader",
+                    "type": "name"
+                },
+                {
+                    "name": "airdrop_account",
+                    "type": "name"
+                },
+                {
+                    "name": "airdrop_alloc_bps",
+                    "type": "uint16"
+                },
+                {
+                    "name": "cooldown_secs",
+                    "type": "uint32"
+                },
+                {
+                    "name": "min_cooldown",
+                    "type": "uint32"
+                },
+                {
+                    "name": "max_cooldown",
+                    "type": "uint32"
+                },
+                {
+                    "name": "proposal_threshold",
+                    "type": "int64"
+                },
+                {
+                    "name": "quorum_bps",
+                    "type": "uint16"
+                },
+                {
+                    "name": "approval_bps",
+                    "type": "uint16"
+                },
+                {
+                    "name": "voting_period_secs",
+                    "type": "uint32"
+                },
+                {
+                    "name": "timelock_secs",
+                    "type": "uint32"
+                },
+                {
+                    "name": "rpt_hi",
+                    "type": "uint64"
+                },
+                {
+                    "name": "rpt_lo",
+                    "type": "uint64"
+                },
+                {
+                    "name": "total_staked",
+                    "type": "int64"
+                },
+                {
+                    "name": "total_cooling",
+                    "type": "int64"
+                },
+                {
+                    "name": "total_votable",
+                    "type": "int64"
+                },
+                {
+                    "name": "reward_pot",
+                    "type": "int64"
+                },
+                {
+                    "name": "reward_pending_undistributed",
+                    "type": "int64"
+                },
+                {
+                    "name": "airdrop_liability",
+                    "type": "int64"
+                },
+                {
+                    "name": "reward_rate",
+                    "type": "uint64"
+                },
+                {
+                    "name": "reward_period_secs",
+                    "type": "uint32"
+                },
+                {
+                    "name": "sat_lp_fee_share_bps",
+                    "type": "uint16"
+                },
+                {
+                    "name": "buyback_share_bps",
+                    "type": "uint16"
+                },
+                {
+                    "name": "proposal_seq",
+                    "type": "uint64"
+                },
+                {
+                    "name": "open_airdrop_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_airdrop_exec",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "drop_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "merkle_root",
+                    "type": "checksum256"
+                },
+                {
+                    "name": "amount",
+                    "type": "int64"
+                },
+                {
+                    "name": "claimed",
+                    "type": "int64"
+                },
+                {
+                    "name": "snapshot_time",
+                    "type": "uint32"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "execute",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "funder_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "account",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "init",
+            "base": "",
+            "fields": [
+                {
+                    "name": "admin",
+                    "type": "name"
+                },
+                {
+                    "name": "guardian",
+                    "type": "name"
+                },
+                {
+                    "name": "token_contract",
+                    "type": "name"
+                },
+                {
+                    "name": "token_symbol",
+                    "type": "symbol"
+                },
+                {
+                    "name": "trader",
+                    "type": "name"
+                },
+                {
+                    "name": "airdrop_account",
+                    "type": "name"
+                },
+                {
+                    "name": "airdrop_alloc_bps",
+                    "type": "uint16"
+                },
+                {
+                    "name": "novote",
+                    "type": "name[]"
+                },
+                {
+                    "name": "cooldown_secs",
+                    "type": "uint32"
+                },
+                {
+                    "name": "min_cooldown",
+                    "type": "uint32"
+                },
+                {
+                    "name": "max_cooldown",
+                    "type": "uint32"
+                },
+                {
+                    "name": "proposal_threshold",
+                    "type": "int64"
+                },
+                {
+                    "name": "quorum_bps",
+                    "type": "uint16"
+                },
+                {
+                    "name": "approval_bps",
+                    "type": "uint16"
+                },
+                {
+                    "name": "voting_period_secs",
+                    "type": "uint32"
+                },
+                {
+                    "name": "timelock_secs",
+                    "type": "uint32"
+                },
+                {
+                    "name": "sat_lp_fee_share_bps",
+                    "type": "uint16"
+                },
+                {
+                    "name": "buyback_share_bps",
+                    "type": "uint16"
+                }
+            ]
+        },
+        {
+            "name": "logairdrop",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "amount",
+                    "type": "int64"
+                },
+                {
+                    "name": "root",
+                    "type": "checksum256"
+                }
+            ]
+        },
+        {
+            "name": "logclaim",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "amount",
+                    "type": "int64"
+                }
+            ]
+        },
+        {
+            "name": "logclaimdrop",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "account",
+                    "type": "name"
+                },
+                {
+                    "name": "amount",
+                    "type": "int64"
+                }
+            ]
+        },
+        {
+            "name": "logexec",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "kind",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "logpropose",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "proposer",
+                    "type": "name"
+                },
+                {
+                    "name": "kind",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "logqueue",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "status",
+                    "type": "uint8"
+                },
+                {
+                    "name": "eta",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "logreward",
+            "base": "",
+            "fields": [
+                {
+                    "name": "from",
+                    "type": "name"
+                },
+                {
+                    "name": "amount",
+                    "type": "int64"
+                },
+                {
+                    "name": "pot",
+                    "type": "int64"
+                }
+            ]
+        },
+        {
+            "name": "logstake",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "amount",
+                    "type": "int64"
+                },
+                {
+                    "name": "total_staked",
+                    "type": "int64"
+                }
+            ]
+        },
+        {
+            "name": "logunstake",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "amount",
+                    "type": "int64"
+                },
+                {
+                    "name": "ready",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "logveto",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "guardian",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "logvote",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "voter",
+                    "type": "name"
+                },
+                {
+                    "name": "support",
+                    "type": "bool"
+                },
+                {
+                    "name": "weight",
+                    "type": "int64"
+                }
+            ]
+        },
+        {
+            "name": "novote_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "account",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "proposal_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "proposer",
+                    "type": "name"
+                },
+                {
+                    "name": "kind",
+                    "type": "name"
+                },
+                {
+                    "name": "bps0",
+                    "type": "uint16"
+                },
+                {
+                    "name": "bps1",
+                    "type": "uint16"
+                },
+                {
+                    "name": "bps2",
+                    "type": "uint16"
+                },
+                {
+                    "name": "bps3",
+                    "type": "uint16"
+                },
+                {
+                    "name": "bps4",
+                    "type": "uint16"
+                },
+                {
+                    "name": "p0",
+                    "type": "uint32"
+                },
+                {
+                    "name": "p1",
+                    "type": "uint32"
+                },
+                {
+                    "name": "rate",
+                    "type": "uint64"
+                },
+                {
+                    "name": "amount",
+                    "type": "int64"
+                },
+                {
+                    "name": "snapshot_time",
+                    "type": "uint32"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
+                },
+                {
+                    "name": "merkle_root",
+                    "type": "checksum256"
+                },
+                {
+                    "name": "novote_account",
+                    "type": "name"
+                },
+                {
+                    "name": "snapshot_total",
+                    "type": "int64"
+                },
+                {
+                    "name": "start_time",
+                    "type": "uint32"
+                },
+                {
+                    "name": "end_time",
+                    "type": "uint32"
+                },
+                {
+                    "name": "applied_timelock",
+                    "type": "uint32"
+                },
+                {
+                    "name": "for_votes",
+                    "type": "int64"
+                },
+                {
+                    "name": "against_votes",
+                    "type": "int64"
+                },
+                {
+                    "name": "eta",
+                    "type": "uint32"
+                },
+                {
+                    "name": "status",
+                    "type": "uint8"
+                }
+            ]
+        },
+        {
+            "name": "propose",
+            "base": "",
+            "fields": [
+                {
+                    "name": "proposer",
+                    "type": "name"
+                },
+                {
+                    "name": "kind",
+                    "type": "name"
+                },
+                {
+                    "name": "bps",
+                    "type": "uint16[]"
+                },
+                {
+                    "name": "p0",
+                    "type": "uint32"
+                },
+                {
+                    "name": "p1",
+                    "type": "uint32"
+                },
+                {
+                    "name": "rate",
+                    "type": "uint64"
+                },
+                {
+                    "name": "amount",
+                    "type": "int64"
+                },
+                {
+                    "name": "snapshot_time",
+                    "type": "uint32"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
+                },
+                {
+                    "name": "merkle_root",
+                    "type": "checksum256"
+                },
+                {
+                    "name": "novote_account",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "queue",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "setfunder",
+            "base": "",
+            "fields": [
+                {
+                    "name": "admin",
+                    "type": "name"
+                },
+                {
+                    "name": "account",
+                    "type": "name"
+                },
+                {
+                    "name": "add",
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "stake_row",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "amount",
+                    "type": "int64"
+                },
+                {
+                    "name": "paid_hi",
+                    "type": "uint64"
+                },
+                {
+                    "name": "paid_lo",
+                    "type": "uint64"
+                },
+                {
+                    "name": "pending_rewards",
+                    "type": "int64"
+                },
+                {
+                    "name": "unstake_amount",
+                    "type": "int64"
+                },
+                {
+                    "name": "unstake_ready",
+                    "type": "uint32"
+                },
+                {
+                    "name": "vote_lock_until",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "unstake",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "amount",
+                    "type": "int64"
+                }
+            ]
+        },
+        {
+            "name": "veto",
+            "base": "",
+            "fields": [
+                {
+                    "name": "guardian",
+                    "type": "name"
+                },
+                {
+                    "name": "id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "vote",
+            "base": "",
+            "fields": [
+                {
+                    "name": "voter",
+                    "type": "name"
+                },
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "support",
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "withdraw",
+            "base": "",
+            "fields": [
+                {
+                    "name": "owner",
+                    "type": "name"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "name": "claim",
+            "type": "claim",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "claimdrop",
+            "type": "claimdrop",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "compound",
+            "type": "compound",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "execute",
+            "type": "execute",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "init",
+            "type": "init",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "logairdrop",
+            "type": "logairdrop",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "logclaim",
+            "type": "logclaim",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "logclaimdrop",
+            "type": "logclaimdrop",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "logexec",
+            "type": "logexec",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "logpropose",
+            "type": "logpropose",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "logqueue",
+            "type": "logqueue",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "logreward",
+            "type": "logreward",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "logstake",
+            "type": "logstake",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "logunstake",
+            "type": "logunstake",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "logveto",
+            "type": "logveto",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "logvote",
+            "type": "logvote",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "propose",
+            "type": "propose",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "queue",
+            "type": "queue",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setfunder",
+            "type": "setfunder",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "unstake",
+            "type": "unstake",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "veto",
+            "type": "veto",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "vote",
+            "type": "vote",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "withdraw",
+            "type": "withdraw",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "ballots",
+            "type": "ballot_row",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "claims",
+            "type": "claim_row",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "config",
+            "type": "config_row",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "drops",
+            "type": "drop_row",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "funders",
+            "type": "funder_row",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "novote",
+            "type": "novote_row",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "proposals",
+            "type": "proposal_row",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "stakes",
+            "type": "stake_row",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": [],
+    "action_results": []
+}
