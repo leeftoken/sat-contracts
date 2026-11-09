@@ -105,6 +105,12 @@ DESC="buyback with injected memo path rejected"; EXPECT="digits and commas"; no 
 DESC="buyback above bucket balance rejected"; EXPECT="too low"; no $C push action leeftrader buyback '["satlp",{"quantity":"999.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"1.0000 SAT","contract":"sat.token"}]' -p botacct
 DESC="buyback reverts when output below min_out"; EXPECT="below min_out"; no $C push action leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"6000.0000 SAT","contract":"sat.token"}]' -p botacct
 DESC="same-token loop needs min_out >= in + 1 unit"; EXPECT="in + 1"; no $C push action leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"100.00000000 WAX","contract":"wax.mock"}]' -p botacct
+# H-02: checkout records the token balance BEFORE sending `in`, so a same-token
+# swap that returns in+1 is measured as net +1 and fails min_out. Restore SAT
+# setout afterwards so later cases keep the original mock output.
+$C push action swap.mock setout '[{"quantity":"101.00000000 WAX","contract":"wax.mock"},{"quantity":"1.0000 SAT","contract":"sat.token"}]' -p swap.mock >/dev/null
+DESC="same-token min_out=in+1 still reverts (checkout net-delta vs gross out)"; EXPECT="below min_out"; no $C push action leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"101.00000000 WAX","contract":"wax.mock"}]' -p botacct
+$C push action swap.mock setout '[{"quantity":"5000.0000 SAT","contract":"sat.token"},{"quantity":"1.0000 SAT","contract":"sat.token"}]' -p swap.mock >/dev/null
 DESC="buyback through non-whitelisted pool rejected"; EXPECT="pool not whitelisted"; no $C push action leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1,99",{"quantity":"4000.0000 SAT","contract":"sat.token"}]' -p botacct
 DESC="min_out on a fake contract with the same symbol rejected"; EXPECT="output token not whitelisted"; no $C push action leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"4000.0000 SAT","contract":"leef.mock"}]' -p botacct
 DESC="valid buyback: 100 WAX -> 5000 SAT credited to satlp"; ok $C push action leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"4000.0000 SAT","contract":"sat.token"}]' -p botacct

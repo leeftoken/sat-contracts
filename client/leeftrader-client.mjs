@@ -25,8 +25,9 @@ export function buybackAction({ actor, bucket, inAsset, swap = 'swap.alcor', poo
     data: { bucket, in: inAsset, swap, pool_path: poolPath, min_out: minOut } };
 }
 export function addlpAction({ actor, bucket, poolId, a, b, tickLower, tickUpper, minA, minB }) {
+  // ABI fields are tick_lower / tick_upper (not tl/tu). Wrong names serialize as 0,0 and addlp reverts.
   return { account: CONTRACT_ACCOUNT, name: 'addlp', authorization: auth(actor),
-    data: { bucket, pool_id: poolId, a, b, tl: tickLower, tu: tickUpper, min_a: minA, min_b: minB } };
+    data: { bucket, pool_id: poolId, a, b, tick_lower: tickLower, tick_upper: tickUpper, min_a: minA, min_b: minB } };
 }
 export function collectfeesAction({ actor, lpId, maxA, maxB }) {
   return { account: CONTRACT_ACCOUNT, name: 'collectfees', authorization: auth(actor),
