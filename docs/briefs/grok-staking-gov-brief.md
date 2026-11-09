@@ -345,3 +345,13 @@ Mainnet account creation/deploy, real SAT mint/transfer, changing Alcor lock len
 - **Hard bounds:** at most 25% of the airdrop account's balance per airdrop proposal, at most 1 executed airdrop per 30 days, and a minimum 7-day voting period plus a 48h timelock. The guardian veto still applies in v1.
 - **Required permission:** the airdrop account's active permission is `smartastake1@eosio.code` only (no human key) so funds leave only through passed proposals. Document the setup as a manual step; do not include keys.
 - **Tests to add:** novote stake gets rewards but adds 0 voting power; airdrop proposal over the 25% bound is rejected; a second airdrop within 30 days is rejected; merkle claim works once per account and rejects bad proofs or double claims; the airdrop executes only after the timelock.
+
+## Where the code goes: repo leeftoken/sat-contracts (private)
+
+Add the new contract to the existing repo https://github.com/leeftoken/sat-contracts **without deleting, renaming or rewriting any existing file**. The existing contracts `sat.token/`, `leeftrader/` and `mocks/` and the files `AUDIT-*.md`, `DESIGN.md`, `abi/`, `client/`, `tests/` and `params.proposal.json` must stay exactly as they are.
+
+- New folder: `smartastake/smartastake.cpp` (plus `.hpp` if used), following the same one-folder-per-contract layout.
+- New tests: `tests/smartastake/` with their own script. Do not edit `tests/run_tests.sh` except to append a line that calls the new script.
+- `build.sh`: only add `smartastake` to the existing `for c in ...` list. Change nothing else.
+- Work on a new branch (for example `grok/smartastake`) and open a pull request. Do not push to `main` or merge.
+- No keys, env files, account permissions or build outputs in the commit.

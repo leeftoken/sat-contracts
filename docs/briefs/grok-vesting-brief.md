@@ -297,3 +297,13 @@ cdt-cpp -abigen -O3 -o build/sat.token.wasm sat.token/sat.token.cpp
 ## 8. Scratch note for the human paste
 
 A scratch directory `/workspace/sat-vest` may already exist with empty `smartavest/`, `tests/`, `build/`, `docs/` folders and a copied `sat.token/sat.token.cpp`. You may continue there or create a clean tree; do not assume any vesting `.cpp` was finished.
+
+## Where the code goes: repo leeftoken/sat-contracts (private)
+
+Add the new contract to the existing repo https://github.com/leeftoken/sat-contracts **without deleting, renaming or rewriting any existing file**. The existing contracts `sat.token/`, `leeftrader/` and `mocks/` and the files `AUDIT-*.md`, `DESIGN.md`, `abi/`, `client/`, `tests/` and `params.proposal.json` must stay exactly as they are.
+
+- New folder: `smartavest/smartavest.cpp` (plus `.hpp` if used), following the same one-folder-per-contract layout.
+- New tests: `tests/smartavest/` with their own script. Do not edit `tests/run_tests.sh` except to append a line that calls the new script.
+- `build.sh`: only add `smartavest` to the existing `for c in ...` list. Change nothing else.
+- Work on a new branch (for example `grok/smartavest`) and open a pull request. Do not push to `main` or merge.
+- No keys, env files, account permissions or build outputs in the commit.
