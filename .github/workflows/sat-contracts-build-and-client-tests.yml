@@ -36,10 +36,10 @@ jobs:
       - name: Install pinned Antelope CDT
         run: |
           curl --fail --location --retry 3 \
-            https://github.com/AntelopeIO/cdt/releases/download/v4.1.1/cdt_4.1.1_amd64.deb \
-            --output /tmp/cdt_4.1.1_amd64.deb
+            https://github.com/AntelopeIO/cdt/releases/download/v4.1.1/cdt_4.1.1-1_amd64.deb \
+            --output /tmp/cdt_4.1.1-1_amd64.deb
           sudo apt-get update
-          sudo apt-get install --yes /tmp/cdt_4.1.1_amd64.deb
+          sudo apt-get install --yes /tmp/cdt_4.1.1-1_amd64.deb
           cdt-cpp --version
       - name: Build production SAT token and trader contracts
         run: ./build.sh
