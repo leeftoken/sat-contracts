@@ -13,7 +13,7 @@ Once staked, the fund:
 - **Cannot** `unstake`, `withdraw`, or `claim`. Those actions revert with `airdrop fund is proposal-only`.
 - Pays future airdrops only through a passed governance proposal of kind `airdrop`, after which recipients call `claimdrop` with a merkle proof.
 
-**Not audited. Account not created.** The stake contract that enforces this is itself not deployed and not audited. Signing the seed-and-stake batch waits for an external audit.
+**Account not created.** The stake contract that enforces this is not deployed. A 2026-11-14 source review is in [AUDIT-2026-11-14.md](../AUDIT-2026-11-14.md); signing the seed-and-stake batch still waits for an external firm audit.
 
 ## Accounts and permissions
 
@@ -30,7 +30,7 @@ Do not commit keys or a filled-in permission JSON with private material.
 
 ## How the money is sourced
 
-1. **Principal.** B2 issues `1250000.0000 SAT` to `smartaadmin1`, transfers it to `smartadrop11`, then `smartadrop11` transfers it to `smartastake1` with memo `stake`. This happens **before any reward arrives**, so no first staker can take a held reward pot (while `total_staked == 0`, incoming rewards are held and the first stake receives all of them). After the fund is staked, `total_staked` cannot return to zero, because an airdrop can take at most 25% of the fund.
+1. **Principal.** B2 issues `1250000.0000 SAT` to `smartaadmin1`, transfers it to `smartadrop11`, then `smartadrop11` transfers it to `smartastake1` with memo `stake`. Reward / vest-claim transfers revert with `fund not staked` until that stake exists, so a first staker cannot capture a parked pot. After the fund is staked, `total_staked` cannot return to zero, because an airdrop can take at most 25% of the fund.
 2. **Compounds.** The fund's stake earns its share of everything that funds the reward pot. `compound` is permissionless and also runs automatically on reward notifies and on airdrop propose/execute.
 
 A rejected alternative (`B2-alt`: 625k staked plus 625k streamed to `smartadrop11`) is not used. Each vest claim would land as a plain balance that needed a human `active` key to restake, which conflicts with B6.
@@ -82,7 +82,7 @@ Even when the global vote period or timelock is shorter:
 - `snapshot_time` must be in the past or now, not the future.
 - `memo` ≤ 256 bytes; merkle root must be non-zero.
 - A queued airdrop that is not executed within 14 days after `eta` expires (status 6) and frees the open slot.
-- A guardian `veto` of a queued airdrop does not clear `open_airdrop_id` (a defeated `queue` or an expired `execute` does). Prefer expiry over veto if the goal is only to free the slot. See [smartastake.md](smartastake.md).
+- A guardian `veto` of an active or queued airdrop clears `open_airdrop_id` (a defeated `queue` or an expired `queue`/`execute` does too). See [smartastake.md](smartastake.md).
 
 `execute` debits the fund's active stake and credits `drops` plus `airdrop_liability`. It does not send SAT to recipients yet.
 
@@ -129,7 +129,7 @@ The fund pays no fee to be staked. It receives a pro-rata share of the staking r
 
 ## Security model and known limits
 
-- **Not audited yet.** The fund's safety is the stake contract's safety.
+- **Not a firm audit.** The fund's safety is the stake contract's safety. See [AUDIT-2026-11-14.md](../AUDIT-2026-11-14.md).
 - Unclaimed airdrop amounts sit in `airdrop_liability` until `claimdrop`. There is no expiry or sweep. Recipients who lose their proof or miss the drop leave SAT in the contract indefinitely.
 - A stale queued airdrop used to block the airdrop slot forever unless the guardian vetoed it. After PR #5 it expires 14 days after `eta`.
 - Just-in-time staking can still let someone pick up a share of a reward lump after a short cooldown; that is a staking-rewards issue, not an airdrop-cap bypass.

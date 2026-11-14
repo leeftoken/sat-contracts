@@ -302,7 +302,7 @@ class [[eosio::contract("smartastake")]] smartastake : public contract {
   [[eosio::action]]
   void setfunder(name admin, name account, bool add) {
     auto c = load();
-    require_auth(admin);
+    require_auth(permission_level{admin, "active"_n});
     check(admin == c.admin, "not admin");
     check(account.value != 0, "account");
     funders_tbl funders(get_self(), get_self().value);
@@ -360,6 +360,7 @@ class [[eosio::contract("smartastake")]] smartastake : public contract {
       s.unstake_amount = 0;
       s.unstake_ready = 0;
     });
+    maybe_close_stake(stakes, owner.value);
     save(c);
     assert_invariant(c);
     send_sat(c, owner, pay, "withdraw");
@@ -379,6 +380,7 @@ class [[eosio::contract("smartastake")]] smartastake : public contract {
     check(pay <= c.reward_pot, "reward pot short");
     stakes.modify(it, same_payer, [&](auto& s) { s.pending_rewards = 0; });
     c.reward_pot -= pay;
+    maybe_close_stake(stakes, owner.value);
     save(c);
     assert_invariant(c);
     log_claim(owner, pay);
@@ -508,6 +510,12 @@ class [[eosio::contract("smartastake")]] smartastake : public contract {
     p.snapshot_total = c.total_votable;
     p.id = ++c.proposal_seq;
     if (kind == "airdrop"_n) c.open_airdrop_id = p.id;
+    // Lock proposer stake until voting ends so a threshold holder cannot
+    // inflate snapshot_total and unstake before anyone can vote.
+    st = stakes.require_find(proposer.value, "no stake");
+    uint32_t lock = p.end_time;
+    if (st->vote_lock_until > lock) lock = st->vote_lock_until;
+    stakes.modify(st, same_payer, [&](auto& s) { s.vote_lock_until = lock; });
     proposals_tbl props(get_self(), get_self().value);
     props.emplace(proposer, [&](auto& row) { row = p; });
     save(c);
@@ -558,6 +566,20 @@ class [[eosio::contract("smartastake")]] smartastake : public contract {
     auto pit = props.require_find(id, "no proposal");
     check(pit->status == ST_ACTIVE, "not active");
     check(now >= pit->end_time, "voting open");
+    // Timelock starts when voting ends, not when someone remembers to queue.
+    // A passed-but-unqueued vote cannot sit for months and then override a
+    // newer executed proposal after a fresh timelock.
+    uint64_t eta64 = uint64_t(pit->end_time) + pit->applied_timelock;
+    if (uint64_t(now) > eta64 + EXEC_GRACE) {
+      free_airdrop_slot(c, *pit);
+      props.modify(pit, same_payer, [&](auto& p) {
+        p.status = ST_EXPIRED;
+        p.eta = 0;
+      });
+      save(c);
+      log_queue(id, ST_EXPIRED, 0);
+      return;
+    }
     __int128 cast = static_cast<__int128>(pit->for_votes) + pit->against_votes;
     bool quorum = cast * 10000 >= static_cast<__int128>(pit->snapshot_total) * c.quorum_bps;
     bool approval = cast > 0 && static_cast<__int128>(pit->for_votes) * 10000 >= cast * c.approval_bps;
@@ -565,10 +587,11 @@ class [[eosio::contract("smartastake")]] smartastake : public contract {
     uint32_t eta = 0;
     if (quorum && approval) {
       status = ST_QUEUED;
-      eta = now + pit->applied_timelock;
+      check(eta64 <= 0xffffffffull, "eta overflow");
+      eta = static_cast<uint32_t>(eta64);
     } else {
       status = ST_DEFEATED;
-      if (pit->kind == "airdrop"_n && c.open_airdrop_id == pit->id) c.open_airdrop_id = 0;
+      free_airdrop_slot(c, *pit);
     }
     props.modify(pit, same_payer, [&](auto& p) {
       p.status = status;
@@ -588,7 +611,7 @@ class [[eosio::contract("smartastake")]] smartastake : public contract {
     check(pit->eta != 0 && now >= pit->eta, "timelock");
     if (static_cast<uint64_t>(now) > static_cast<uint64_t>(pit->eta) + EXEC_GRACE) {
       // Expire instead of failing so the status change sticks.
-      if (pit->kind == "airdrop"_n && c.open_airdrop_id == pit->id) c.open_airdrop_id = 0;
+      free_airdrop_slot(c, *pit);
       props.modify(pit, same_payer, [&](auto& row) { row.status = ST_EXPIRED; });
       save(c);
       log_queue(id, ST_EXPIRED, pit->eta);
@@ -678,13 +701,13 @@ class [[eosio::contract("smartastake")]] smartastake : public contract {
 
   [[eosio::action]]
   void veto(name guardian, uint64_t id) {
-    require_auth(guardian);
+    require_auth(permission_level{guardian, "active"_n});
     auto c = load();
     check(guardian == c.guardian, "not guardian");
     proposals_tbl props(get_self(), get_self().value);
     auto pit = props.require_find(id, "no proposal");
-    check(pit->status == ST_QUEUED, "not queued");
-    if (pit->kind == "airdrop"_n && c.open_airdrop_id == pit->id) c.open_airdrop_id = 0;
+    check(pit->status == ST_QUEUED || pit->status == ST_ACTIVE, "not vetoable");
+    free_airdrop_slot(c, *pit);
     props.modify(pit, same_payer, [&](auto& p) {
       p.status = ST_VETOED;
       p.eta = 0;
@@ -795,6 +818,20 @@ class [[eosio::contract("smartastake")]] smartastake : public contract {
     novote_tbl nv(get_self(), get_self().value);
     return nv.find(account.value) != nv.end();
   }
+  bool fund_staked(const config_row& c) {
+    if (!c.airdrop_account.value) return true;
+    stakes_tbl stakes(get_self(), get_self().value);
+    auto it = stakes.find(c.airdrop_account.value);
+    return it != stakes.end() && it->amount > 0;
+  }
+  void free_airdrop_slot(config_row& c, const proposal_row& p) {
+    if (p.kind == "airdrop"_n && c.open_airdrop_id == p.id) c.open_airdrop_id = 0;
+  }
+  void maybe_close_stake(stakes_tbl& stakes, uint64_t owner_value) {
+    auto it = stakes.find(owner_value);
+    if (it == stakes.end()) return;
+    if (it->amount == 0 && it->unstake_amount == 0 && it->pending_rewards == 0) stakes.erase(it);
+  }
   void settle(config_row& c, stakes_tbl& stakes, uint64_t owner_value) {
     auto it = stakes.require_find(owner_value, "no stake");
     uint128_t acc = join128(c.rpt_hi, c.rpt_lo);
@@ -841,6 +878,9 @@ class [[eosio::contract("smartastake")]] smartastake : public contract {
   }
   void fund_reward(config_row& c, int64_t qty) {
     check(qty > 0, "amount");
+    // While the configured airdrop fund is not yet staked, hold nothing: the
+    // transfer reverts so a 0.0001 SAT sniper cannot capture parked rewards.
+    check(fund_staked(c), "fund not staked");
     if (c.total_staked == 0) {
       check(c.reward_pending_undistributed <= MAX_I64 - qty, "reward overflow");
       c.reward_pending_undistributed += qty;

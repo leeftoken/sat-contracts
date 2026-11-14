@@ -4,7 +4,7 @@
 
 Smallest-safe SAT vesting vault. It holds SAT only and releases it on a fixed cliff plus linear schedule to a beneficiary that is set at open and can never change.
 
-**Not audited. Not deployed.** Do not create `smartavest11` or send mainnet SAT to it until an external audit is done and the owner has approved the lock batches. Source: `smartavest/smartavest/smartavest.cpp`. Planned account: `smartavest11`. Planned production wasm sha256 (CDT 4.1.1, `-O3`, no test clock): `b6166eae6560e8bc43ac2bafed01ec58e7476fa30e297ddbe4c85074a54ae532`. Rebuild to verify. The production ABI is `abi/smartavest.abi` (actions: `init`, `openstream`, `claim` only — no `setnow`).
+**Not deployed.** Source-reviewed in [AUDIT-2026-11-14.md](../AUDIT-2026-11-14.md) with no WASM change. Do not create `smartavest11` or send mainnet SAT to it until an external firm audit is done and the owner has approved the lock batches. Source: `smartavest/smartavest/smartavest.cpp`. Planned account: `smartavest11`. Planned production wasm sha256 (CDT 4.1.1, `-O3`, no test clock): `b6166eae6560e8bc43ac2bafed01ec58e7476fa30e297ddbe4c85074a54ae532`. Rebuild to verify. The production ABI is `abi/smartavest.abi` (actions: `init`, `openstream`, `claim` only — no `setnow`).
 
 There is no `withdraw`, `revoke`, `setbeneficiary`, `rescue`, or `pause`. `claim` is permissionless and always pays the stream beneficiary, never the caller.
 
@@ -208,7 +208,7 @@ None. The vault does not take a fee. What happens after a claim is up to the ben
 
 ## Security model and known limits
 
-**Not audited yet.** A 2026-11-14 source review found no fund-loss bug in this contract: math, auth, first-receiver checks, re-entrancy ordering, and books all checked out, and the local suite was 83 passed / 0 failed. That is not an external audit. Known limits, stated honestly:
+**Not a firm audit.** A 2026-11-14 source review ([AUDIT-2026-11-14.md](../AUDIT-2026-11-14.md)) found no fund-loss bug in this contract: math, auth, first-receiver checks, re-entrancy ordering, and books all checked out, and the local suite was 83 passed / 0 failed. Known limits, stated honestly:
 
 - A beneficiary contract that rejects SAT bricks that stream. The beneficiary cannot be changed and there is no withdraw. Only use beneficiaries that accept SAT. For the rewards stream, that means `smartastake1` must already have `setfunder` for `smartavest11` (see launch order). If the stake admin is retired before `setfunder`, the 23.75M rewards stream can never be claimed.
 - Mid-stream `fund:<id>` vests pro-rata immediately. Fund fully at open unless that effect is intended.

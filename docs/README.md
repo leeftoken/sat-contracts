@@ -134,14 +134,14 @@ Passing `setsplit` or `setlimits` also requires the trader `setgov` patch descri
 
 ## Deploy and launch order
 
-Operational order. The contracts do not enforce every prerequisite, so doing this out of sequence can strand funds or leave a gap a first staker can take.
+Operational order. The contracts now revert reward transfers until the airdrop fund is staked. Other prerequisites (setfunder, trader `setgov`) are still operational: doing them out of sequence can strand vest claims or leave `setsplit`/`setlimits` unable to execute.
 
 | Batch | What | Why this position |
 |---|---|---|
 | Before B0 | External audit. Fund `smartaadmin1` with about 530 WAX for RAM and CPU. Already done as of 2026-11-14: liquid balance `530.00000000 WAX`. Do not send another 530 unless that balance has been spent down. | Accounts cannot be created on an empty payer. |
-| **B0** | Create `smartavest11`, `smartastake1`, `smartadrop11`. Set vest and stake code. Active authorities include `eosio.code` on the two contract accounts. | Accounts and code first. Planned hashes: vest `b6166eae…a532`, stake `dff935d9…a2ad` (main after PR #5). Rebuild with CDT 4.1.1 to confirm. |
+| **B0** | Create `smartavest11`, `smartastake1`, `smartadrop11`. Set vest and stake code. Active authorities include `eosio.code` on the two contract accounts. | Accounts and code first. Planned hashes: vest `b6166eae…a532` (unchanged), stake `557f65fa…3d79` (this audit's fixes). Rebuild with CDT 4.1.1 to confirm. |
 | **B1** | `smartavest11::init` and `smartastake1::init` with the governance numbers above. | Once only. |
-| **B2** | Issue 1,250,000 SAT, move it to `smartadrop11`, stake it (`memo: stake`) **before any reward arrives**. | While `total_staked == 0`, rewards are held and the first staker receives all of them. After the fund is in, `total_staked` cannot return to zero (airdrops take at most 25% of the fund). |
+| **B2** | Issue 1,250,000 SAT, move it to `smartadrop11`, stake it (`memo: stake`) **before any reward arrives**. | Reward / vest-claim transfers revert with `fund not staked` until the fund has a positive stake, so a first-staker sniper cannot capture parked rewards. After the fund is in, `total_staked` cannot return to zero (airdrops take at most 25% of the fund). |
 | **B3** | `setfunder` for `smartavest11` and `smartafees11`. | Vest claims use memo `vesting claim`. Without this, those claims revert. Must happen before the stake admin is retired. |
 | **B4** | Issue 78,750,000 SAT and open the four streams, in order `lpreserve`, `rewards`, `treasury`, `team`. | Stream ids follow that open order (0..3 if nothing else is opened first). Supply then equals max supply. |
 | **B5** | Patch `smartatrader` with `binary_extension<name> gov` and call `setgov("smartastake1")` from `smartaadmin1`. | Must happen before governance queues `setsplit` or `setlimits`. A plain `name gov` field bricks the live config singleton. |
@@ -198,12 +198,12 @@ Live code hashes, matching a CDT 4.1.1 `-O3` rebuild of this repo. Re-checked on
 | `sattoken1111` | `e1702842a5cc049c592abc92aabfbd2e02325c709b401629f5b3634d2dcf7dbc` | LIVE, hash matches |
 | `smartatrader` | `4ed7d02a7f7107dc03d9c9df61b77fd4927368ea95b669e0d0ba228f1ee729c4` | LIVE, hash matches |
 
-Planned, **not on mainnet** (accounts `smartavest11`, `smartastake1`, and `smartadrop11` do not exist; verified 2026-11-14). Rebuild with CDT 4.1.1 to verify. Production wasm is not committed to git. The hashes below are a CDT 4.1.1 `-O3` production build of this tree after PR #5 (no test clock):
+Planned, **not on mainnet** (accounts `smartavest11`, `smartastake1`, and `smartadrop11` do not exist; verified 2026-11-14). Rebuild with CDT 4.1.1 to verify. Production wasm is not committed to git. The hashes below are a CDT 4.1.1 `-O3` production build of this tree after the 2026-11-14 audit fixes (no test clock):
 
 | Account | sha256 (CDT 4.1.1, `-O3`, no test clock) | Mainnet |
 |---|---|---|
-| `smartavest11` | `b6166eae6560e8bc43ac2bafed01ec58e7476fa30e297ddbe4c85074a54ae532` | PLANNED — account does not exist |
-| `smartastake1` | `dff935d9797bac8a16bea24a42b4061cf066a42cd401dd9b541320fc6f42a2ad` | PLANNED — account does not exist |
+| `smartavest11` | `b6166eae6560e8bc43ac2bafed01ec58e7476fa30e297ddbe4c85074a54ae532` | PLANNED — account does not exist (unchanged) |
+| `smartastake1` | `557f65faa57a6cdfa500f3ae218fd45db6009314ba399ae55e16e7a90a9c3d79` | PLANNED — account does not exist (changed by this audit) |
 | `smartadrop11` | (no contract; no wasm) | PLANNED — account does not exist |
 
 Production vest and stake ABIs must not contain `setnow` or `settime`. The test builds that add a clock are for local suites only and must not be deployed.

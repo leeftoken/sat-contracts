@@ -210,22 +210,25 @@ def main():
     say("FINDING", "integration I-1: vest claim memo 'vesting claim' to smartastake1 reverts until "
         "smartavest11 is setfunder'ed; if the stake admin is retired first, the 25M rewards stream is stuck")
     push(STK, "setfunder", {"admin": GRD, "account": VST, "add": True}, GRD)
+    fails(VST, "claim", {"id": vid}, "mallory", "fund not staked")
+    say("FIXED", "stake S-1: vest/reward transfers revert until the airdrop fund is staked, so a "
+        "0.0001 SAT sniper cannot capture parked rewards")
+    xfer(DROP, STK, 30_000_0000, "stake")
     pot0 = int(scfg()["reward_pot"])
+    st0 = int(scfg()["total_staked"])
     push(VST, "claim", {"id": vid}, "mallory")
-    pot1 = int(scfg()["reward_pot"])
-    if pot1 <= pot0 or int(scfg()["total_staked"]) != 0:
-        sys.exit(scfg())
-    say("PASS", f"integration: after setfunder, vest claim lands as reward ({sat(pot1 - pot0)}) held undistributed")
+    c1 = scfg()
+    if int(c1["total_staked"]) <= st0:
+        sys.exit(c1)
+    say("PASS", "integration: after setfunder and B2 fund stake, vest claim compounds into the fund")
 
-    # ---------- staking: first staker takes held rewards ----------
+    # ---------- staking: sniper after the fund is in ----------
     m0 = bal("mallory")
     xfer("mallory", STK, 1, "stake")
-    push(STK, "claim", {"owner": "mallory"}, "mallory")
-    took = bal("mallory") - m0 + 1
-    if took != pot1:
-        sys.exit(f"mallory took {took} of {pot1}")
-    say("FINDING", f"stake S-1 (HIGH, ops): with nobody staked, a permissionless vest claim parks rewards; the "
-        f"first 0.0001 SAT staker then claims all of it ({sat(took)})")
+    fails(STK, "claim", {"owner": "mallory"}, "mallory", "nothing to claim")
+    if bal("mallory") != m0 - 1:
+        sys.exit(f"mallory liquid {bal('mallory')} after 1-unit stake")
+    say("PASS", "tiny staker after the fund is in cannot claim the vest lump")
 
     # ---------- JIT staking ----------
     xfer("bob", STK, 1000_0000, "stake")
@@ -240,9 +243,7 @@ def main():
     say("FINDING", f"stake S-2 (MEDIUM): staking just before a reward lump captures it pro-rata "
         f"({sat(jit)} of 100 SAT) and exits after the 3-day cooldown; reward_rate is stored but unused")
 
-    # mitigation for S-1: airdrop fund staked first can never drop to zero
-    xfer(DROP, STK, 30_000_0000, "stake")
-    say("PASS", "airdrop fund staked (novote); it can never unstake, so total_staked stays > 0 after this")
+    say("PASS", "airdrop fund was staked before rewards (B2); it cannot unstake, so total_staked stays > 0")
 
     # ---------- trader integration ----------
     xfer(ADM, TRD, 100_000_0000, "revenue")
@@ -336,6 +337,20 @@ def main():
             sys.exit(f"cooldown {cd} status {prop(p2)['status']}")
         say("FIXED", "stake S-4: queued proposals expire 14 days after eta (status 6); the stale setcooldown "
             "did not override the newer one")
+
+    p4 = propose("alice", "setcooldown", p0=4 * DAY)
+    push(STK, "vote", {"voter": "alice", "id": p4, "support": True}, "alice")
+    warp(T + 3 * DAY)
+    warp(T + 20 * DAY)
+    push(STK, "queue", {"id": p4}, "bob")
+    if MODE == "base":
+        if int(prop(p4)["status"]) != 3:
+            sys.exit(prop(p4))
+        say("BUG", "stake S-5: an unqueued passed vote can be queued years later with a fresh timelock")
+    else:
+        if int(prop(p4)["status"]) != 6:
+            sys.exit(prop(p4))
+        say("FIXED", "stake S-5: unqueued proposals expire 14 days after end+timelock; delayed queue cannot revive them")
 
     # ---------- books ----------
     c = scfg()
