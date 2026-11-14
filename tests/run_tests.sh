@@ -46,13 +46,21 @@ for t in sat.token wax.mock usdt.mock leef.mock; do $C set code $t build/sat.tok
 $C set code leeftrader build/leeftrader.wasm >/dev/null && $C set abi leeftrader build/leeftrader.abi >/dev/null
 $C set code swap.mock build/mockswap.wasm >/dev/null && $C set abi swap.mock build/mockswap.abi >/dev/null
 for a in leeftrader swap.mock; do $C set account permission $a active --add-code >/dev/null; done
+# The bot uses a dedicated child permission. Only trading/maintenance actions
+# are linked to it; payout is deliberately admin-only.
+$C set account permission botacct bot "$DEVPUB" active -p botacct@active >/dev/null
+for act in buyback addlp lpwithdraw collectfees pause; do
+  $C set action permission botacct leeftrader "$act" bot -p botacct@active >/dev/null
+done
 
 # tokens
 $C push action -f sat.token create '["sat.token","100000000.0000 SAT"]' -p sat.token >/dev/null
+DESC="SAT issuer owner permission cannot issue"; no $C push action -f sat.token issue '["sat.token","1.0000 SAT","owner must not issue"]' -p sat.token@owner
 $C push action -f wax.mock create '["wax.mock","1000000000.00000000 WAX"]' -p wax.mock >/dev/null
 $C push action -f usdt.mock create '["usdt.mock","1000000000.0000 USDT"]' -p usdt.mock >/dev/null
 $C push action -f leef.mock create '["leef.mock","420000000000.0000 LEEF"]' -p leef.mock >/dev/null
 $C push action -f sat.token issue '["sat.token","100000000.0000 SAT","all"]' -p sat.token >/dev/null
+DESC="SAT issuer owner permission cannot retire"; no $C push action -f sat.token retire '["1.0000 SAT","owner must not retire"]' -p sat.token@owner
 $C push action -f wax.mock issue '["wax.mock","1000000.00000000 WAX",""]' -p wax.mock >/dev/null
 $C push action -f usdt.mock issue '["usdt.mock","100000.0000 USDT",""]' -p usdt.mock >/dev/null
 $C push action -f leef.mock issue '["leef.mock","1000000000.0000 LEEF",""]' -p leef.mock >/dev/null
@@ -70,21 +78,22 @@ DESC="transfer without owner auth rejected"; no $C push action -f sat.token tran
 echo "== leeftrader config"
 DESC="trading account rejected as bot (deny-list)"; EXPECT="trading accounts may not hold"; no $C push action -f leeftrader init '["adminmsig","danishcrypto","teamfees","swap.mock"]' -p leeftrader
 DESC="init with fresh placeholder accounts"; ok $C push action -f leeftrader init '["adminmsig","botacct","teamfees","swap.mock"]' -p leeftrader
-DESC="split must total 10000 bps"; EXPECT="10000"; no $C push action -f leeftrader setsplit '[["satlp","leeflp"],[5000,4000]]' -p adminmsig
+DESC="admin owner permission cannot change contract config"; no $C push action -f leeftrader setpool '[98,true]' -p adminmsig@owner
+DESC="split must total 10000 bps"; EXPECT="10000"; no $C push action -f leeftrader setsplit '[["satlp","leeflp"],[5000,4000]]' -p adminmsig@active
 DESC="bot cannot change split"; no $C push action -f leeftrader setsplit '[["satlp","leeflp","ops","rewards","reserve"],[3000,2500,2500,1000,1000]]' -p botacct
-DESC="admin sets 30/25/25/10/10 split"; ok $C push action -f leeftrader setsplit '[["satlp","leeflp","ops","rewards","reserve"],[3000,2500,2500,1000,1000]]' -p adminmsig
-DESC="whitelist WAX, USDT, SAT, LEEF"; ok $C push action -f leeftrader settoken '[{"sym":"8,WAX","contract":"wax.mock"},true]' -p adminmsig
-ok $C push action -f leeftrader settoken '[{"sym":"4,USDT","contract":"usdt.mock"},true]' -p adminmsig
-ok $C push action -f leeftrader settoken '[{"sym":"4,SAT","contract":"sat.token"},true]' -p adminmsig
-ok $C push action -f leeftrader settoken '[{"sym":"4,LEEF","contract":"leef.mock"},true]' -p adminmsig
-DESC="admin sets plan 1: 5 USDT / 30 days"; ok $C push action -f leeftrader setplan '[1,{"quantity":"5.0000 USDT","contract":"usdt.mock"},30,true]' -p adminmsig
-DESC="raise caps for test (100% per action/day, 42y lock)"; ok $C push action -f leeftrader setlimits '[10000,10000,1325419200]' -p adminmsig
-DESC="lock shorter than 1 year rejected"; EXPECT="lock too short"; no $C push action -f leeftrader setlimits '[10000,10000,86400]' -p adminmsig
-DESC="lock past 2106 (uint32 overflow) rejected"; EXPECT="uint32 max"; no $C push action -f leeftrader setlimits '[10000,10000,4000000000]' -p adminmsig
-DESC="admin whitelists Alcor pools 1 and 7"; ok $C push action -f leeftrader setpool '[1,true]' -p adminmsig
-ok $C push action -f leeftrader setpool '[7,true]' -p adminmsig
+DESC="admin sets 30/25/25/10/10 split"; ok $C push action -f leeftrader setsplit '[["satlp","leeflp","ops","rewards","reserve"],[3000,2500,2500,1000,1000]]' -p adminmsig@active
+DESC="whitelist WAX, USDT, SAT, LEEF"; ok $C push action -f leeftrader settoken '[{"sym":"8,WAX","contract":"wax.mock"},true]' -p adminmsig@active
+ok $C push action -f leeftrader settoken '[{"sym":"4,USDT","contract":"usdt.mock"},true]' -p adminmsig@active
+ok $C push action -f leeftrader settoken '[{"sym":"4,SAT","contract":"sat.token"},true]' -p adminmsig@active
+ok $C push action -f leeftrader settoken '[{"sym":"4,LEEF","contract":"leef.mock"},true]' -p adminmsig@active
+DESC="admin sets plan 1: 5 USDT / 30 days"; ok $C push action -f leeftrader setplan '[1,{"quantity":"5.0000 USDT","contract":"usdt.mock"},30,true]' -p adminmsig@active
+DESC="raise caps for test (100% per action/day, 42y lock)"; ok $C push action -f leeftrader setlimits '[10000,10000,1325419200]' -p adminmsig@active
+DESC="lock shorter than 1 year rejected"; EXPECT="lock too short"; no $C push action -f leeftrader setlimits '[10000,10000,86400]' -p adminmsig@active
+DESC="lock past 2106 (uint32 overflow) rejected"; EXPECT="uint32 max"; no $C push action -f leeftrader setlimits '[10000,10000,4000000000]' -p adminmsig@active
+DESC="admin whitelists Alcor pools 1 and 7"; ok $C push action -f leeftrader setpool '[1,true]' -p adminmsig@active
+ok $C push action -f leeftrader setpool '[7,true]' -p adminmsig@active
 DESC="non-admin cannot whitelist pools"; no $C push action -f leeftrader setpool '[99,true]' -p botacct
-DESC="bot cannot become fee recipient"; EXPECT="differ from bot"; no $C push action -f leeftrader setfeercpt '["botacct"]' -p adminmsig
+DESC="bot cannot become fee recipient"; EXPECT="differ from bot"; no $C push action -f leeftrader setfeercpt '["botacct"]' -p adminmsig@active
 
 echo "== revenue"
 DESC="subscription payment records sub and splits revenue"; ok $C push action -f usdt.mock transfer '["alice","leeftrader","5.0000 USDT","sub:1"]' -p alice
@@ -92,10 +101,10 @@ DESC="subs row for alice exists"; ok bash -c "$C get table leeftrader leeftrader
 DESC="satlp bucket got 30% (1.5000 USDT)"; ok bash -c "$C get table leeftrader satlp buckets | grep -q '1.5000 USDT'"
 DESC="reserve bucket got 10% (0.5000 USDT)"; ok bash -c "$C get table leeftrader reserve buckets | grep -q '0.5000 USDT'"
 DESC="underpaid subscription rejected"; EXPECT="underpaid"; no $C push action -f usdt.mock transfer '["alice","leeftrader","1.0000 USDT","sub:1"]' -p alice
-DESC="delist LEEF"; ok $C push action -f leeftrader settoken '[{"sym":"4,LEEF","contract":"leef.mock"},false]' -p adminmsig
+DESC="delist LEEF"; ok $C push action -f leeftrader settoken '[{"sym":"4,LEEF","contract":"leef.mock"},false]' -p adminmsig@active
 DESC="non-whitelisted token rejected"; EXPECT="token not accepted"; no $C push action -f leef.mock transfer '["leef.mock","leeftrader","1.0000 LEEF",""]' -p leef.mock
 DESC="WAX deposit splits into buckets"; ok $C push action -f wax.mock transfer '["alice","leeftrader","1000.00000000 WAX","fund"]' -p alice
-sleep 0.6; DESC="relist LEEF"; ok $C push action -f leeftrader settoken '[{"sym":"4,LEEF","contract":"leef.mock"},true]' -p adminmsig
+sleep 0.6; DESC="relist LEEF"; ok $C push action -f leeftrader settoken '[{"sym":"4,LEEF","contract":"leef.mock"},true]' -p adminmsig@active
 
 echo "== buyback guards"
 $C push action -f swap.mock setout '[{"quantity":"5000.0000 SAT","contract":"sat.token"},{"quantity":"1.0000 SAT","contract":"sat.token"}]' -p swap.mock >/dev/null
@@ -109,7 +118,8 @@ DESC="same-token loop needs min_out >= in + 1 unit"; EXPECT="in + 1"; no $C push
 # swap that returns in+1 is measured as net +1 and fails min_out. Restore SAT
 # setout afterwards so later cases keep the original mock output.
 $C push action -f swap.mock setout '[{"quantity":"101.00000000 WAX","contract":"wax.mock"},{"quantity":"1.0000 SAT","contract":"sat.token"}]' -p swap.mock >/dev/null
-DESC="same-token min_out=in+1 still reverts (checkout net-delta vs gross out)"; EXPECT="below min_out"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"101.00000000 WAX","contract":"wax.mock"}]' -p botacct
+DESC="same-token profitable loop succeeds using gross output"; ok $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"101.00000000 WAX","contract":"wax.mock"}]' -p botacct
+DESC="same-token checkout credits gross output after spend; net bucket gain is 1 WAX"; ok bash -c "$C get table leeftrader satlp buckets | grep -q '301.00000000 WAX'"
 $C push action -f swap.mock setout '[{"quantity":"5000.0000 SAT","contract":"sat.token"},{"quantity":"1.0000 SAT","contract":"sat.token"}]' -p swap.mock >/dev/null
 DESC="buyback through non-whitelisted pool rejected"; EXPECT="pool not whitelisted"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1,99",{"quantity":"4000.0000 SAT","contract":"sat.token"}]' -p botacct
 DESC="min_out on a fake contract with the same symbol rejected"; EXPECT="output token not whitelisted"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"4000.0000 SAT","contract":"leef.mock"}]' -p botacct
@@ -129,15 +139,17 @@ DESC="teamfees received 1.0000 SAT"; ok bash -c "[ \"\$($C get currency balance 
 DESC="collectfees by outsider rejected"; no $C push action -f leeftrader collectfees '["alice",0,"1.00000000 WAX","1.0000 SAT"]' -p alice
 
 echo "== payout + pause"
-DESC="payout to non-whitelisted account rejected"; EXPECT="not whitelisted"; no $C push action -f leeftrader payout '["ops","bob",{"quantity":"1.00000000 WAX","contract":"wax.mock"},"x"]' -p botacct
-DESC="trading account cannot be whitelisted as destination"; EXPECT="trading accounts"; no $C push action -f leeftrader setdest '["danishcrypto",true]' -p adminmsig
-DESC="admin whitelists opswallet"; ok $C push action -f leeftrader setdest '["opswallet",true]' -p adminmsig
-DESC="payout ops -> opswallet"; ok $C push action -f leeftrader payout '["ops","opswallet",{"quantity":"1.00000000 WAX","contract":"wax.mock"},"ops"]' -p botacct
-DESC="bot can pause"; ok $C push action -f leeftrader pause '["botacct",true]' -p botacct
+DESC="bot permission cannot authorize treasury payout"; no $C push action -f leeftrader payout '["ops","opswallet",{"quantity":"1.00000000 WAX","contract":"wax.mock"},"x"]' -p botacct@bot
+DESC="payout to non-whitelisted account rejected"; EXPECT="not whitelisted"; no $C push action -f leeftrader payout '["ops","bob",{"quantity":"1.00000000 WAX","contract":"wax.mock"},"x"]' -p adminmsig@active
+DESC="trading account cannot be whitelisted as destination"; EXPECT="trading accounts"; no $C push action -f leeftrader setdest '["danishcrypto",true]' -p adminmsig@active
+DESC="admin whitelists opswallet"; ok $C push action -f leeftrader setdest '["opswallet",true]' -p adminmsig@active
+DESC="admin active permission can payout to whitelisted opswallet"; ok $C push action -f leeftrader payout '["ops","opswallet",{"quantity":"1.00000000 WAX","contract":"wax.mock"},"ops"]' -p adminmsig@active
+DESC="bot active permission cannot bypass dedicated bot permission"; no $C push action -f leeftrader pause '["botacct",true]' -p botacct@active
+DESC="bot child permission can pause"; ok $C push action -f leeftrader pause '["botacct",true]' -p botacct
 DESC="paused contract rejects buyback"; EXPECT="paused"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"1.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"1.0000 SAT","contract":"sat.token"}]' -p botacct
 DESC="bot cannot unpause"; EXPECT="not allowed"; no $C push action -f leeftrader pause '["botacct",false]' -p botacct
-DESC="admin unpauses"; ok $C push action -f leeftrader pause '["adminmsig",false]' -p adminmsig
-DESC="admin sets 5% per-action / 20% daily caps"; ok $C push action -f leeftrader setlimits '[500,2000,1325419200]' -p adminmsig
+DESC="admin unpauses"; ok $C push action -f leeftrader pause '["adminmsig",false]' -p adminmsig@active
+DESC="admin sets 5% per-action / 20% daily caps"; ok $C push action -f leeftrader setlimits '[500,2000,1325419200]' -p adminmsig@active
 DESC="buyback over 5% of bucket rejected"; EXPECT="per-action cap"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"1.0000 SAT","contract":"sat.token"}]' -p botacct
 
 echo; echo "RESULT: $PASS passed, $FAIL failed"
