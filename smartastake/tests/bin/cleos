@@ -1,2 +1,12 @@
 #!/usr/bin/env bash
-exec /usr/bin/cleos --no-auto-keosd --wallet-url unix:///tmp/sat-stake-home/keosd.sock "$@"
+# Prefer SPRING_BIN, then a cleos on PATH outside this directory, then /usr/bin.
+here="$(cd "$(dirname "$0")" && pwd)"
+real="${SPRING_BIN:+$SPRING_BIN/cleos}"
+if [[ -z "$real" ]]; then
+  IFS=: read -ra dirs <<< "$PATH"
+  for d in "${dirs[@]}"; do
+    [[ "$(cd "$d" 2>/dev/null && pwd)" == "$here" ]] && continue
+    [[ -x "$d/cleos" ]] && { real="$d/cleos"; break; }
+  done
+fi
+exec "${real:-/usr/bin/cleos}" --no-auto-keosd --wallet-url unix:///tmp/sat-stake-home/keosd.sock "$@"
