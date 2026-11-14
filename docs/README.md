@@ -8,11 +8,11 @@ These guides describe contract behaviour on [leeftoken/sat-contracts](https://gi
 
 | Guide | Account | Status |
 |---|---|---|
-| [sat.token.md](sat.token.md) | `sattoken1111` | Live. Code hash matches this repo. |
-| [leeftrader.md](leeftrader.md) | `smartatrader` | Live. Code hash matches this repo. A later `setgov` patch is required before staking governance can change splits or caps. |
-| [smartavest.md](smartavest.md) | `smartavest11` | Built, not deployed, not audited. |
-| [smartastake.md](smartastake.md) | `smartastake1` | Built, not deployed, not audited. |
-| [airdrop-fund.md](airdrop-fund.md) | `smartadrop11` | Account not created. The fund is a staked, no-vote SAT account inside `smartastake`, not its own contract. |
+| [sat.token.md](sat.token.md) | `sattoken1111` | **LIVE.** Account exists. Contract deployed. On-chain code hash matches this repo (verified 2026-11-14). |
+| [leeftrader.md](leeftrader.md) | `smartatrader` | **LIVE.** Account exists. Contract deployed. On-chain code hash matches this repo (verified 2026-11-14). A later `setgov` patch is required before staking governance can change splits or caps. |
+| [smartavest.md](smartavest.md) | `smartavest11` | **PLANNED.** Account does not exist on mainnet. Built locally, not deployed, not audited. |
+| [smartastake.md](smartastake.md) | `smartastake1` | **PLANNED.** Account does not exist on mainnet. Built locally, not deployed, not audited. |
+| [airdrop-fund.md](airdrop-fund.md) | `smartadrop11` | **PLANNED.** Account does not exist on mainnet. The fund is a staked, no-vote SAT account inside `smartastake`, not its own contract. |
 
 Related older notes, kept as planning history (the 2026-11-14 decisions below supersede draft numbers where they differ):
 
@@ -25,7 +25,7 @@ Related older notes, kept as planning history (the 2026-11-14 decisions below su
 
 ## System overview
 
-SAT is a fixed-supply token (100,000,000.0000 SAT, 4 decimals, no inflation) issued by `sattoken1111`. Live today: 20,000,000.0000 SAT is issued (the 10% community airdrop plus about 10M already in locked Alcor LP). The remaining 80,000,000.0000 SAT is reserved for the lock plan and is still unissued.
+SAT is a fixed-supply token (100,000,000.0000 SAT, 4 decimals, no inflation). The token contract is `sattoken1111`; the issuer account (the only account that can `issue` or `retire`) is `smartaadmin1`. Live today: `20000000.0000 SAT` is issued and `80000000.0000 SAT` remains mintable. That 20M is the 10% community allocation plus the SAT that was deposited into locked Alcor position 153128 (see the allocation table; the SAT amount still sitting in that CLMM position moves with price).
 
 `smartatrader` (source: `leeftrader/`) is the live treasury and automation guard. It splits incoming revenue into buckets, lets one bot account run capped buybacks, locked LP adds, fee collection and whitelisted payouts, and is configured by a 2-of-3 admin multisig.
 
@@ -80,6 +80,19 @@ flowchart TB
 | `smartadrop11` | Airdrop fund account (planned). No contract code. Stakes into `smartastake1`. |
 | `swap.alcor` | Alcor swap and CLMM. Locked positions cannot be removed through `smartatrader` (the contract has no `subliquid`). |
 
+Mainnet existence, verified 2026-11-14 from public WAX RPC (`get_account` / `get_code_hash`). `smartavest11`, `smartastake1`, and `smartadrop11` are names reserved for later deploy; they are not live.
+
+| Account | Exists? | Code? | Code hash (sha256) | Notes |
+|---|---|---|---|---|
+| `sattoken1111` | Yes (created 2026-10-23) | Yes | `e1702842…7dbc` (matches this repo) | `active` is `smartaadmin1@active`. Issuer in `stat`: `smartaadmin1`. Supply `20000000.0000 SAT` / max `100000000.0000 SAT`. |
+| `smartatrader` | Yes (created 2026-10-22) | Yes | `4ed7d02a…29c4` (matches this repo) | `active` includes `smartaadmin1@active` and `smartatrader@eosio.code`. |
+| `smartaadmin1` | Yes (created 2026-10-23) | No | zero hash | 2-of-3 `active`: `danishcrypto`, `smart.ass`, `leef`, each weight 1, threshold 2. Token issuer. Liquid `530.00000000 WAX` as of this check. |
+| `smartafees11` | Yes (created 2026-10-23) | No | zero hash | Same 2-of-3 `active` pattern. Owns locked LP 153128. |
+| `smartabot111` | Yes (created 2026-10-23) | No | zero hash | Bot actor for `smartatrader`. |
+| `smartavest11` | **No** | — | — | PLANNED vesting vault. |
+| `smartastake1` | **No** | — | — | PLANNED staking and governance. |
+| `smartadrop11` | **No** | — | — | PLANNED airdrop-fund account (no wasm). |
+
 Trading accounts (`mywaxgallery`, `danishcrypto`, `qu.ui.wam`, `skgaw.wam`, `dustwizard42`, `niftywarlord`, `smart.ass`) cannot be the bot or a payout destination. The only exception is as **signers** of the admin and fee multisigs, and the fee multisig as a payout target.
 
 ## Approved allocation (2026-11-14)
@@ -88,8 +101,8 @@ Of the 100,000,000.0000 SAT max supply. Signing the issuance and stream-open bat
 
 | Bucket | Share | Amount | Destination | Schedule |
 |---|---|---|---|---|
-| Community (LEEF holders) | 10% | 10,000,000 | Already airdropped, 2026-11-09 | Done |
-| Locked liquidity | 35% | 10,000,000 already in Alcor locked position 153128 (pool 12905, owner `smartafees11`, unlock 2068-10-22); **25,000,000** still to stream | `smartavest11` stream `lpreserve`, beneficiary `smartaadmin1` | Cliff 0, 4-year linear (`1461 * 86400` = 126,230,400 s). Released SAT is added to Alcor `lockpos` in tranches, paired with WAX or LEEF. |
+| Community (LEEF holders) | 10% | 10,000,000 | Issued for the 2026-11-09 airdrop. **9,999,999.9635 SAT** was sent to 706 wallets; **0.0365 SAT** remains in `smartaadmin1`. | Done (dust leftover is still on the issuer) |
+| Locked liquidity | 35% | About 10,000,000 SAT was deposited into Alcor locked position **153128** (pool 12905, owner `smartafees11`, `lockpos` unlock 2068-10-22 16:19 Europe/Copenhagen, unix `3118144759`). It is a full-range CLMM position, so the SAT/LEEF mix changes with price. As of 2026-11-14 the position held **7,324,936.2550 SAT** and **1,452,418,676.2071 LEEF**, plus unclaimed fees of about 1,635.6918 SAT and 1,477,818.5436 LEEF. **25,000,000** still to stream. | `smartavest11` stream `lpreserve`, beneficiary `smartaadmin1` | Cliff 0, 4-year linear (`1461 * 86400` = 126,230,400 s). Released SAT is added to Alcor `lockpos` in tranches, paired with WAX or LEEF. |
 | User rewards | 25% | **23,750,000** | `smartavest11` stream `rewards`, beneficiary `smartastake1` | Cliff 0, 4-year linear. Claims arrive as staking rewards after `setfunder` for `smartavest11`. |
 | Future airdrop fund | (5% of the rewards bucket) | **1,250,000** | `smartadrop11`, staked in `smartastake1` at genesis | Permanently staked, no vote, cannot unstake. Grows by compounding its own staking rewards. Airdrops: at most 25% of the fund per drop, at most one every 30 days, 7-day vote, 48-hour timelock. |
 | Treasury | 15% | 15,000,000 | `smartavest11` stream `treasury`, beneficiary `smartaadmin1` | Cliff 0, 4-year linear. |
@@ -125,7 +138,7 @@ Operational order. The contracts do not enforce every prerequisite, so doing thi
 
 | Batch | What | Why this position |
 |---|---|---|
-| Before B0 | External audit. Fund `smartaadmin1` with about 530 WAX for RAM and CPU. | Accounts cannot be created on an empty payer. |
+| Before B0 | External audit. Fund `smartaadmin1` with about 530 WAX for RAM and CPU. Already done as of 2026-11-14: liquid balance `530.00000000 WAX`. Do not send another 530 unless that balance has been spent down. | Accounts cannot be created on an empty payer. |
 | **B0** | Create `smartavest11`, `smartastake1`, `smartadrop11`. Set vest and stake code. Active authorities include `eosio.code` on the two contract accounts. | Accounts and code first. Planned hashes: vest `b6166eae…a532`, stake `dff935d9…a2ad` (main after PR #5). Rebuild with CDT 4.1.1 to confirm. |
 | **B1** | `smartavest11::init` and `smartastake1::init` with the governance numbers above. | Once only. |
 | **B2** | Issue 1,250,000 SAT, move it to `smartadrop11`, stake it (`memo: stake`) **before any reward arrives**. | While `total_staked == 0`, rewards are held and the first staker receives all of them. After the fund is in, `total_staked` cannot return to zero (airdrops take at most 25% of the fund). |
@@ -178,19 +191,20 @@ cd smartavest && ./build.sh
 cd ../smartastake && ./build.sh
 ```
 
-Live code hashes, matching a CDT 4.1.1 `-O3` rebuild of this repo:
+Live code hashes, matching a CDT 4.1.1 `-O3` rebuild of this repo. Re-checked on WAX mainnet on 2026-11-14 (`get_code_hash`; `last_code_update` for both was 2026-10-23):
 
-| Account | sha256 |
-|---|---|
-| `sattoken1111` | `e1702842a5cc049c592abc92aabfbd2e02325c709b401629f5b3634d2dcf7dbc` |
-| `smartatrader` | `4ed7d02a7f7107dc03d9c9df61b77fd4927368ea95b669e0d0ba228f1ee729c4` |
+| Account | sha256 | Mainnet |
+|---|---|---|
+| `sattoken1111` | `e1702842a5cc049c592abc92aabfbd2e02325c709b401629f5b3634d2dcf7dbc` | LIVE, hash matches |
+| `smartatrader` | `4ed7d02a7f7107dc03d9c9df61b77fd4927368ea95b669e0d0ba228f1ee729c4` | LIVE, hash matches |
 
-Planned, not on mainnet (rebuild to verify; wasm is not committed):
+Planned, **not on mainnet** (accounts `smartavest11`, `smartastake1`, and `smartadrop11` do not exist; verified 2026-11-14). Rebuild with CDT 4.1.1 to verify. Production wasm is not committed to git. The hashes below are a CDT 4.1.1 `-O3` production build of this tree after PR #5 (no test clock):
 
-| Account | sha256 (CDT 4.1.1, `-O3`, no test clock) |
-|---|---|
-| `smartavest11` | `b6166eae6560e8bc43ac2bafed01ec58e7476fa30e297ddbe4c85074a54ae532` |
-| `smartastake1` | `dff935d9797bac8a16bea24a42b4061cf066a42cd401dd9b541320fc6f42a2ad` |
+| Account | sha256 (CDT 4.1.1, `-O3`, no test clock) | Mainnet |
+|---|---|---|
+| `smartavest11` | `b6166eae6560e8bc43ac2bafed01ec58e7476fa30e297ddbe4c85074a54ae532` | PLANNED — account does not exist |
+| `smartastake1` | `dff935d9797bac8a16bea24a42b4061cf066a42cd401dd9b541320fc6f42a2ad` | PLANNED — account does not exist |
+| `smartadrop11` | (no contract; no wasm) | PLANNED — account does not exist |
 
 Production vest and stake ABIs must not contain `setnow` or `settime`. The test builds that add a clock are for local suites only and must not be deployed.
 

@@ -4,7 +4,7 @@
 
 Smallest-safe SAT vesting vault. It holds SAT only and releases it on a fixed cliff plus linear schedule to a beneficiary that is set at open and can never change.
 
-**Not audited. Not deployed.** Do not create `smartavest11` or send mainnet SAT to it until an external audit is done and the owner has approved the lock batches. Source: `smartavest/smartavest.cpp`. Planned account: `smartavest11`. Planned production wasm sha256 (CDT 4.1.1, `-O3`, no test clock): `b6166eae6560e8bc43ac2bafed01ec58e7476fa30e297ddbe4c85074a54ae532`. Rebuild to verify. The production ABI is `abi/smartavest.abi` (actions: `init`, `openstream`, `claim` only — no `setnow`).
+**Not audited. Not deployed.** Do not create `smartavest11` or send mainnet SAT to it until an external audit is done and the owner has approved the lock batches. Source: `smartavest/smartavest/smartavest.cpp`. Planned account: `smartavest11`. Planned production wasm sha256 (CDT 4.1.1, `-O3`, no test clock): `b6166eae6560e8bc43ac2bafed01ec58e7476fa30e297ddbe4c85074a54ae532`. Rebuild to verify. The production ABI is `abi/smartavest.abi` (actions: `init`, `openstream`, `claim` only — no `setnow`).
 
 There is no `withdraw`, `revoke`, `setbeneficiary`, `rescue`, or `pause`. `claim` is permissionless and always pays the stream beneficiary, never the caller.
 

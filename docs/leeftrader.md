@@ -64,7 +64,7 @@ cleos -u https://wax.greymass.com get table smartatrader smartatrader config
 
 ### `tokens`
 
-Whitelisted `extended_symbol` (`symbol` + contract). Incoming transfers of any other token revert. Primary key is the symbol code (one row per symbol; a symbol cannot be listed under two contracts).
+Whitelisted `extended_symbol` (`symbol` + contract). Incoming transfers of any other token revert. Primary key is the symbol code (one row per symbol; a symbol cannot be listed under two contracts). Live as of 2026-11-14: `4,SAT@sattoken1111`, `8,WAX@eosio.token`, `4,LEEF@leefmaincorp`, `6,USDT@wrap.alcor`, `6,WAXUSDC@eth.token`, `8,WAXWBTC@eth.token`.
 
 ### `swaps`
 
@@ -72,7 +72,7 @@ Whitelisted swap contracts. Incoming transfers **from** a listed swap are ignore
 
 ### `dests`
 
-Whitelisted payout destinations. `fee_recipient` is always inserted at `init` and again by `setfeercpt`.
+Whitelisted payout destinations. `fee_recipient` is always inserted at `init` and again by `setfeercpt`. Live as of 2026-11-14: `smartafees11` only. `smartastake1` is not listed yet (and that account does not exist).
 
 ### `pools`
 
@@ -101,7 +101,7 @@ Set during `buyback`, cleared by `checkout`. Fields: `bucket`, `min_out`, `befor
 
 ### `lps`
 
-Locked positions this contract recorded: `id`, `pool_id`, `tick_lower`, `tick_upper`, `unlock`, `bucket`.
+Locked positions this contract recorded: `id`, `pool_id`, `tick_lower`, `tick_upper`, `unlock`, `bucket`. As of 2026-11-14 this table has one row (pool 12405, bucket `satlp`, unlock unix `3118144086`). Locked SAT/LEEF position **153128** is owned by `smartafees11` and lives in `swap.alcor` (`positions` scope `12905`, `locks` scope `swap.alcor`). It is not a `smartatrader` `lps` row, because it was not opened through `addlp`.
 
 ## Actions
 

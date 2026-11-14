@@ -4,7 +4,7 @@
 
 Staking and bounded governance for SAT on WAX. Users stake SAT, earn a pro-rata share of the reward pot, and vote on a fixed list of proposal kinds. An airdrop fund (`smartadrop11`) is a special no-vote stake that cannot unstake; stakers vote on merkle airdrops paid from that fund.
 
-**Not audited. Not deployed.** Do not create `smartastake1` or send mainnet SAT to it until an external audit is complete and the owner has approved the lock batches. Source: `smartastake/smartastake.cpp`. Planned account: `smartastake1`. Planned production wasm sha256 (CDT 4.1.1, `-O3`, no test clock, after [PR #5](https://github.com/leeftoken/sat-contracts/pull/5)): `dff935d9797bac8a16bea24a42b4061cf066a42cd401dd9b541320fc6f42a2ad`. Rebuild to verify. Production ABI: `abi/smartastake.abi` (no `settime`). The test clock build is `abi/smartastake_test.abi` only.
+**Not audited. Not deployed.** Do not create `smartastake1` or send mainnet SAT to it until an external audit is complete and the owner has approved the lock batches. Source: `smartastake/smartastake/smartastake.cpp`. Planned account: `smartastake1`. Planned production wasm sha256 (CDT 4.1.1, `-O3`, no test clock, after [PR #5](https://github.com/leeftoken/sat-contracts/pull/5)): `dff935d9797bac8a16bea24a42b4061cf066a42cd401dd9b541320fc6f42a2ad`. Rebuild to verify. Production ABI: `abi/smartastake.abi` (no `settime`). The test clock build is `abi/smartastake_test.abi` only.
 
 There is no admin action that withdraws user stake, cooling principal, or the reward pot. There is no `rescue` and no sweep of undistributed rewards.
 
@@ -452,6 +452,8 @@ Approved init values are in [README.md](README.md#approved-governance-numbers). 
 | Reward period | ≥ 1 day if rate > 0; stored only |
 | Merkle proof | ≤ 32 siblings |
 | Memo | ≤ 256 bytes on airdrop proposals |
+
+Internal invariant and overflow checks (not user-facing happy-path errors, but they are real `check` strings in the contract) can also fail with: `div0`, `not inited`, `negative pot`, `owed overflow`, `pending overflow`, `reward overflow`, `stake overflow`, `votable overflow`, `votable>staked`, `undistributed`, `invariant`, `liability`, `split sum`, `split each`, `satlp min`, `ops max`, `rewards min`, `max_in bounds`, `daily bounds`, `max_in>daily`.
 
 ## Fees and splits
 

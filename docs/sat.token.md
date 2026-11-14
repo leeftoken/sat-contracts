@@ -213,4 +213,4 @@ cleos -u https://wax.greymass.com get currency balance sattoken1111 YOURACCOUNT 
 
 ## Deploy and launch order
 
-`sattoken1111` is already live (`create` and the first 20M issued, including the 10% community airdrop and the SAT that went into locked LP). The remaining issuance is B2 then B4, after the audit, as listed in the [system overview](README.md#deploy-and-launch-order).
+`sattoken1111` is already live (`create` and the first `20000000.0000 SAT` issued). That 20M is the 10% community allocation (9,999,999.9635 SAT sent on 2026-11-09; 0.0365 SAT still in `smartaadmin1`) plus the SAT deposited into locked Alcor position 153128 (a CLMM position, so the SAT balance in the position is no longer a flat 10M; see [README.md](README.md#approved-allocation-2026-11-14)). The remaining issuance is B2 then B4, after the audit, as listed in the [system overview](README.md#deploy-and-launch-order).
