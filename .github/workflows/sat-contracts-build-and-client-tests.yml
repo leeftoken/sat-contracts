@@ -40,7 +40,13 @@ jobs:
             --output /tmp/cdt_4.1.1-1_amd64.deb
           sudo apt-get update
           sudo apt-get install --yes /tmp/cdt_4.1.1-1_amd64.deb
+          curl --fail --location --retry 3 \
+            https://github.com/AntelopeIO/spring/releases/download/v1.2.2/antelope-spring_1.2.2_amd64.deb \
+            --output /tmp/antelope-spring_1.2.2_amd64.deb
+          sudo apt-get install --yes /tmp/antelope-spring_1.2.2_amd64.deb
           cdt-cpp --version
+          nodeos --version
+          cleos version client
       - name: Build production SAT token and trader contracts
         run: ./build.sh
       - name: Build SAT staking contract and test-clock variant
@@ -49,5 +55,11 @@ jobs:
       - name: Build SAT vesting contract and test-clock variant
         working-directory: smartavest
         run: ./build.sh
+      - name: Run isolated SAT token and trader local-chain tests
+        run: bash tests/run_tests.sh
+      - name: Run isolated SAT staking local-chain tests
+        run: bash smartastake/tests/run_tests.sh
+      - name: Run isolated SAT vesting local-chain tests
+        run: bash smartavest/tests/run_tests.sh
       - name: Test trader client action serialization and safety helpers
         run: node client/leeftrader-client.test.mjs
