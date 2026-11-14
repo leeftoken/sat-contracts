@@ -2,6 +2,9 @@
 
 Source for the SAT smart contracts deployed on WAX mainnet. **Not a firm audit.** Source+mainnet review: [AUDIT-REPORT.md](AUDIT-REPORT.md). Scope sheet: [AUDIT-SCOPE.md](AUDIT-SCOPE.md).
 
+Full contract guides (token, trader, vesting, staking, airdrop fund, launch order, and governance): [docs/README.md](docs/README.md).
+
+
 | Account | Source | Deployed code hash (sha256) |
 |---|---|---|
 | `sattoken1111` | `sat.token/sat.token.cpp` | `e1702842a5cc049c592abc92aabfbd2e02325c709b401629f5b3634d2dcf7dbc` |
