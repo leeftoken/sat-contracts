@@ -45,7 +45,7 @@ public:
    }
 
    [[eosio::action]] void setlimits(uint16_t max_in_bps, uint16_t daily_cap_bps, uint32_t lock_secs) {
-      auto c = cfg(); require_auth(c.admin);
+      auto c = cfg(); require_auth2(c.admin.value, "active"_n.value);
       check(max_in_bps > 0 && max_in_bps <= 10000, "max_in_bps 1..10000");
       check(daily_cap_bps > 0 && daily_cap_bps <= 10000, "daily_cap_bps 1..10000");
       check(lock_secs >= MIN_LOCK_SECS, "lock too short");
@@ -55,13 +55,13 @@ public:
    }
 
    [[eosio::action]] void setbot(name bot) {
-      auto c = cfg(); require_auth(c.admin);
+      auto c = cfg(); require_auth2(c.admin.value, "active"_n.value);
       check_actor(bot); check(bot != c.admin && bot != c.fee_recipient, "bot must differ from admin and fee recipient");
       c.bot = bot; cfg_t(get_self(), get_self().value).set(c, get_self());
    }
 
    [[eosio::action]] void setfeercpt(name fee_recipient) {
-      auto c = cfg(); require_auth(c.admin);
+      auto c = cfg(); require_auth2(c.admin.value, "active"_n.value);
       check(is_account(fee_recipient), "account does not exist"); check(fee_recipient != c.bot, "fee recipient must differ from bot");
       dests_t old(get_self(), get_self().value); auto o = old.find(c.fee_recipient.value);
       if (o != old.end()) old.erase(o); // the old fee multisig stops being a payout target
@@ -72,7 +72,7 @@ public:
 
    // splits: buckets and basis points, must total 10000. Last entry absorbs rounding dust.
    [[eosio::action]] void setsplit(std::vector<name> buckets, std::vector<uint16_t> bps) {
-      auto c = cfg(); require_auth(c.admin);
+      auto c = cfg(); require_auth2(c.admin.value, "active"_n.value);
       check(buckets.size() == bps.size() && !buckets.empty() && buckets.size() <= 10, "bad split");
       uint32_t sum = 0; for (auto b : bps) sum += b;
       check(sum == 10000, "split must total 10000 bps");
@@ -85,7 +85,7 @@ public:
    }
 
    [[eosio::action]] void settoken(extended_symbol token, bool allowed) {
-      auto c = cfg(); require_auth(c.admin);
+      auto c = cfg(); require_auth2(c.admin.value, "active"_n.value);
       tokens_t t(get_self(), get_self().value);
       auto it = t.find(token.get_symbol().code().raw());
       if (allowed) {
@@ -95,14 +95,14 @@ public:
    }
 
    [[eosio::action]] void setswap(name contract, bool allowed) {
-      auto c = cfg(); require_auth(c.admin);
+      auto c = cfg(); require_auth2(c.admin.value, "active"_n.value);
       swaps_t s(get_self(), get_self().value); auto it = s.find(contract.value);
       if (allowed) { check(is_account(contract), "no account"); if (it == s.end()) s.emplace(get_self(), [&](auto& r) { r.contract = contract; }); }
       else if (it != s.end()) s.erase(it);
    }
 
    [[eosio::action]] void setdest(name account, bool allowed) {
-      auto c = cfg(); require_auth(c.admin);
+      auto c = cfg(); require_auth2(c.admin.value, "active"_n.value);
       check_actor(account);
       dests_t d(get_self(), get_self().value); auto it = d.find(account.value);
       if (allowed) { if (it == d.end()) d.emplace(get_self(), [&](auto& r) { r.account = account; }); }
@@ -111,14 +111,14 @@ public:
 
    // Alcor pool ids the bot may route through or add liquidity to (blocks attacker-made pools).
    [[eosio::action]] void setpool(uint64_t pool_id, bool allowed) {
-      auto c = cfg(); require_auth(c.admin);
+      auto c = cfg(); require_auth2(c.admin.value, "active"_n.value);
       pools_t p(get_self(), get_self().value); auto it = p.find(pool_id);
       if (allowed) { if (it == p.end()) p.emplace(get_self(), [&](auto& r) { r.id = pool_id; }); }
       else if (it != p.end()) p.erase(it);
    }
 
    [[eosio::action]] void setplan(uint64_t id, extended_asset price, uint32_t days, bool active) {
-      auto c = cfg(); require_auth(c.admin);
+      auto c = cfg(); require_auth2(c.admin.value, "active"_n.value);
       check(price.quantity.amount > 0 && days > 0 && days <= 366, "bad plan");
       plans_t p(get_self(), get_self().value); auto it = p.find(id);
       if (it == p.end()) p.emplace(get_self(), [&](auto& r) { r.id = id; r.price = price; r.days = days; r.active = active; });
@@ -127,8 +127,10 @@ public:
 
    // admin can pause/unpause; bot may only pause (emergency stop, e.g. 10% drawdown).
    [[eosio::action]] void pause(name actor, bool paused) {
-      auto c = cfg(); require_auth(actor);
-      check(actor == c.admin || (actor == c.bot && paused), "not allowed");
+      auto c = cfg();
+      if (actor == c.admin) require_auth2(actor.value, "active"_n.value);
+      else if (actor == c.bot && paused) require_auth2(actor.value, "bot"_n.value);
+      else check(false, "not allowed");
       c.paused = paused; cfg_t(get_self(), get_self().value).set(c, get_self());
    }
 
@@ -165,7 +167,15 @@ public:
       spend(c, bucket, in);
       pend_t p(get_self(), get_self().value);
       check(!p.exists(), "swap already pending");
-      pending x{bucket, min_out, balance_of(min_out.contract, min_out.quantity.symbol)};
+      // The input is already deducted by spend() and will leave this contract.
+      // For same-token routes, snapshot the post-input baseline so checkout
+      // measures gross output. For different tokens the output balance is unaffected.
+      int64_t output_baseline = balance_of(min_out.contract, min_out.quantity.symbol);
+      if (in.get_extended_symbol() == min_out.get_extended_symbol()) {
+         check(output_baseline >= in.quantity.amount, "same-token input exceeds contract token balance");
+         output_baseline -= in.quantity.amount;
+      }
+      pending x{bucket, min_out, output_baseline};
       p.set(x, get_self());
       string memo = "swapexactin#" + pool_path + "#" + get_self().to_string() + "#" +
                     min_out.quantity.to_string() + "@" + min_out.contract.to_string() + "#" +
@@ -222,8 +232,10 @@ public:
    }
 
    [[eosio::action]] void collectfees(name actor, uint64_t lp_id, asset max_a, asset max_b) {
-      auto c = cfg(); require_auth(actor);
-      check(actor == c.bot || actor == c.admin, "not allowed");
+      auto c = cfg();
+      if (actor == c.admin) require_auth2(actor.value, "active"_n.value);
+      else if (actor == c.bot) require_auth2(actor.value, "bot"_n.value);
+      else check(false, "not allowed");
       lps_t l(get_self(), get_self().value);
       const auto& r = l.get(lp_id, "unknown lp");
       action(permission_level{get_self(), "active"_n}, c.swap, "collect"_n,
@@ -231,7 +243,10 @@ public:
    }
 
    [[eosio::action]] void payout(name bucket, name to, extended_asset quantity, string memo) {
-      auto c = guard_bot();
+      // Outbound treasury payouts require the admin's exact active permission.
+      auto c = cfg();
+      require_auth2(c.admin.value, "active"_n.value);
+      check(!c.paused, "paused");
       dests_t d(get_self(), get_self().value);
       check(d.find(to.value) != d.end(), "destination not whitelisted");
       if (to != c.fee_recipient) check_actor(to); // trading accounts only ever receive as the fee multisig
@@ -291,7 +306,7 @@ private:
       check(is_account(n), "account does not exist");
    }
 
-   config guard_bot() { auto c = cfg(); require_auth(c.bot); check(!c.paused, "paused"); return c; }
+   config guard_bot() { auto c = cfg(); require_auth2(c.bot.value, "bot"_n.value); check(!c.paused, "paused"); return c; }
 
    static bool valid_path(const string& p) {
       if (p.empty() || p.size() > 64) return false;
