@@ -27,7 +27,7 @@ public:
       stats st(get_self(), sym.code().raw());
       const auto& s = st.get(sym.code().raw(), "token with symbol does not exist, create token before issue");
       check(to == s.issuer, "tokens can only be issued to issuer account");
-      require_auth2(s.issuer.value, "active"_n.value);
+      require_auth(permission_level{s.issuer, "active"_n});
       check(quantity.is_valid() && quantity.amount > 0, "must issue positive quantity");
       check(sym == s.supply.symbol, "symbol precision mismatch");
       check(quantity.amount <= s.max_supply.amount - s.supply.amount, "quantity exceeds available supply");
@@ -40,7 +40,7 @@ public:
       check(memo.size() <= 256, "memo has more than 256 bytes");
       stats st(get_self(), sym.code().raw());
       const auto& s = st.get(sym.code().raw(), "token with symbol does not exist");
-      require_auth2(s.issuer.value, "active"_n.value);
+      require_auth(permission_level{s.issuer, "active"_n});
       check(quantity.is_valid() && quantity.amount > 0, "must retire positive quantity");
       check(sym == s.supply.symbol, "symbol precision mismatch");
       st.modify(s, same_payer, [&](auto& x) { x.supply -= quantity; });
