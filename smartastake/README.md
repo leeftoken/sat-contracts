@@ -10,7 +10,7 @@ There is no admin action that withdraws user stake, cooling principal, or the re
 
 ## Stake, unstake, claim
 
-Users stake only `SAT` from the configured token contract. The notify accepts memo `stake` or an empty memo. Memo `reward` always funds the reward pot. Any other memo is a reward only if `from` is on the funder allowlist (`setfunder`, admin auth); otherwise it is rejected. That lets a vest claim with memo `vest` fund stakers without mixing the transfer into principal.
+Users stake only `SAT` from the configured token contract. The notify accepts memo `stake` or an empty memo. Memo `reward` always funds the reward pot. Any other memo is a reward only if `from` is on the funder allowlist (`setfunder`, admin auth); otherwise it is rejected. That lets a `smartavest` claim (memo `vesting claim`) fund stakers without mixing the transfer into principal, but only after `setfunder` adds the vest contract. Until then that claim reverts. SAT sent by the configured `trader` is always reward funding, whatever the memo, because the trader has no action that could unstake, claim, or vote a stake row.
 
 `unstake` moves active stake into a cooling balance. A new request **resets the timer for the whole cooling balance**, not just the new amount. `withdraw` pays that cooling balance after `unstake_ready` and never touches the reward pot. `claim` pays only accrued rewards from the reward pot and does not change principal.
 
@@ -69,6 +69,10 @@ Lifecycle:
 5. The guardian may `veto` while status is queued, before execute.
 
 Status values: `1` active, `2` defeated, `3` queued, `4` executed, `5` vetoed.
+
+### Queued proposals expire
+
+A queued proposal must be executed within 14 days after its `eta` (`EXEC_GRACE`). A later `execute` marks it expired (status `6`), frees the open airdrop slot if it was an airdrop, and changes nothing else. A stale `setsplit`, `setlimits`, or `setcooldown` therefore cannot override a newer decision months later.
 
 ## Guardian veto is a v1 centralization tradeoff
 
@@ -148,6 +152,15 @@ On Antelope, `owner` still satisfies `require_auth(account)`. The in-contract no
 ## Logs
 
 Self-auth only, for Hyperion: `logstake`, `logunstake`, `logclaim`, `logreward`, `logpropose`, `logvote`, `logqueue`, `logexec`, `logveto`, `logairdrop`, `logclaimdrop`.
+
+## Launch order (review 2026-11-14)
+
+These are operational requirements. The contract does not enforce them.
+
+1. Stake the airdrop fund (`novote`, cannot unstake) **before** any reward reaches the contract. While `total_staked == 0`, rewards are held, and the first staker of even 0.0001 SAT receives all of them. Once the fund is staked, `total_staked` can no longer reach zero, because airdrops take at most 25% of the fund.
+2. `setfunder` the vest contract (`smartavest11`) and `smartafees11` **before** retiring the stake admin key. Otherwise vest claims and fee forwards to this contract revert forever.
+3. Apply the `smartatrader` patch in [docs/TRADER_PATCH.md](docs/TRADER_PATCH.md) with `binary_extension`, then `setgov`, **before** governance queues `setsplit` or `setlimits`.
+4. Reward lumps are distributed at once, so a staker who joins just before a lump gets a pro-rata share after only the cooldown. Prefer many small reward transfers over rare large ones. `reward_rate` and `reward_period_secs` are stored but not used for streaming yet.
 
 ## Build and local test
 

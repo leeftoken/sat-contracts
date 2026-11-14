@@ -63,6 +63,10 @@ static constexpr uint8_t ST_DEFEATED = 2;
 static constexpr uint8_t ST_QUEUED = 3;
 static constexpr uint8_t ST_EXECUTED = 4;
 static constexpr uint8_t ST_VETOED = 5;
+static constexpr uint8_t ST_EXPIRED = 6;
+// A queued proposal that is not executed within this window after eta expires.
+// Stops a stale proposal from overriding a newer one and frees a stuck airdrop slot.
+static constexpr uint32_t EXEC_GRACE = 14 * DAY;
 
 static uint128_t join128(uint64_t hi, uint64_t lo) {
   return (static_cast<uint128_t>(hi) << 64) | lo;
@@ -582,6 +586,14 @@ class [[eosio::contract("smartastake")]] smartastake : public contract {
     auto pit = props.require_find(id, "no proposal");
     check(pit->status == ST_QUEUED, "not queued");
     check(pit->eta != 0 && now >= pit->eta, "timelock");
+    if (static_cast<uint64_t>(now) > static_cast<uint64_t>(pit->eta) + EXEC_GRACE) {
+      // Expire instead of failing so the status change sticks.
+      if (pit->kind == "airdrop"_n && c.open_airdrop_id == pit->id) c.open_airdrop_id = 0;
+      props.modify(pit, same_payer, [&](auto& row) { row.status = ST_EXPIRED; });
+      save(c);
+      log_queue(id, ST_EXPIRED, pit->eta);
+      return;
+    }
     proposal_row p = *pit;
 
     if (p.kind == "setsplit"_n) {
@@ -717,7 +729,10 @@ class [[eosio::contract("smartastake")]] smartastake : public contract {
     check(quantity.symbol == c.token_symbol, "wrong symbol");
     check(quantity.amount > 0, "amount");
 
-    bool reward = memo == "reward";
+    // SAT from the trader contract is always reward funding. The trader has no
+    // action that could ever unstake, claim, or vote, so a stake row for it
+    // would lock that SAT for good.
+    bool reward = memo == "reward" || from == c.trader;
     if (!reward && memo != "stake" && !memo.empty()) {
       funders_tbl funders(get_self(), get_self().value);
       check(funders.find(from.value) != funders.end(), "memo");
