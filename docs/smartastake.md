@@ -4,7 +4,7 @@
 
 Staking and bounded governance for SAT on WAX. Users stake SAT, earn a pro-rata share of the reward pot, and vote on a fixed list of proposal kinds. An airdrop fund (`smartadrop11`) is a special no-vote stake that cannot unstake; stakers vote on merkle airdrops paid from that fund.
 
-**Not audited. Not deployed.** Do not create `smartastake1` or send mainnet SAT to it until an external audit is complete and the owner has approved the lock batches. Source: `smartastake/smartastake/smartastake.cpp`. Planned account: `smartastake1`. Planned production wasm sha256 (CDT 4.1.1, `-O3`, no test clock, after [PR #5](https://github.com/leeftoken/sat-contracts/pull/5)): `dff935d9797bac8a16bea24a42b4061cf066a42cd401dd9b541320fc6f42a2ad`. Rebuild to verify. Production ABI: `abi/smartastake.abi` (no `settime`). The test clock build is `abi/smartastake_test.abi` only.
+**Not deployed.** Source: `smartastake/smartastake/smartastake.cpp`. Planned account: `smartastake1`. Planned production wasm sha256 (CDT 4.1.1, `-O3`, no test clock, after the 2026-11-14 audit): `557f65faa57a6cdfa500f3ae218fd45db6009314ba399ae55e16e7a90a9c3d79`. Rebuild to verify. Production ABI: `abi/smartastake.abi` (no `settime`). The test clock build is `abi/smartastake_test.abi` only. See [AUDIT-2026-11-14.md](../AUDIT-2026-11-14.md).
 
 There is no admin action that withdraws user stake, cooling principal, or the reward pot. There is no `rescue` and no sweep of undistributed rewards.
 
@@ -159,7 +159,7 @@ The local test suite checks this after every run.
 
 1 active-stake unit = 1 vote. Cooling does not vote. Novote accounts earn rewards and count in `total_staked`, but add **0** to `total_votable`, quorum, and the proposal threshold.
 
-Weight is the voter's active stake at the moment they vote, then frozen on that ballot. A second ballot on the same proposal is rejected. Voting sets `vote_lock_until` to the later of its current value and the proposal end. Unstake is rejected until that time. Staking more during a lock is allowed. Proposer stake is not locked just for proposing.
+Weight is the voter's active stake at the moment they vote, then frozen on that ballot. A second ballot on the same proposal is rejected. Voting sets `vote_lock_until` to the later of its current value and the proposal end. Proposing also locks the proposer until that proposal's `end_time`, so a threshold holder cannot inflate `snapshot_total` and unstake before the vote. Unstake is rejected until that time. Staking more during a lock is allowed.
 
 Lifecycle:
 
@@ -169,9 +169,9 @@ Lifecycle:
    - quorum against the snapshot: `(for + against) * 10000 >= snapshot_total * quorum_bps`
    - approval of votes cast: `for * 10000 >= (for + against) * approval_bps`
    Otherwise the proposal is defeated (and an airdrop frees `open_airdrop_id`).
-4. On pass, `eta = now + applied_timelock`. `execute` is permissionless after `eta`.
-5. The guardian may `veto` while status is queued, before execute.
-6. A queued proposal must be executed within 14 days after `eta` (`EXEC_GRACE`). A later `execute` marks it expired (status 6), frees the airdrop slot if needed, and changes nothing else. This stops a stale `setsplit` / `setlimits` / `setcooldown` from overriding a newer decision months later.
+4. On pass, `eta = end_time + applied_timelock` (the clock starts when voting ends, not when someone later calls `queue`). `execute` is permissionless after `eta`.
+5. The guardian may `veto` while status is active or queued. Veto of an airdrop clears `open_airdrop_id`.
+6. A proposal must be queued and executed within 14 days after `eta` (`EXEC_GRACE`). A later `queue` or `execute` marks it expired (status 6), frees the airdrop slot if needed, and changes nothing else. This stops a stale `setsplit` / `setlimits` / `setcooldown` from overriding a newer decision months later, including a passed vote that nobody queued.
 
 Guardian veto is a v1 centralization tradeoff. It reduces the risk of a low-liquidity governance attack while votable stake is small. It is **not** full decentralization. A queued change is not final until the timelock ends without a veto (and is then executed). Stakers cannot vote the guardian out; signer changes on `smartaadmin1` are a multisig `updateauth` ([README.md](README.md#multisig-signer-management)).
 
@@ -340,7 +340,7 @@ cleos push action smartastake1 vote '{"voter":"YOURACCOUNT","id":1,"support":tru
 ### `queue(id)`
 
 - **Auth:** none.
-- **Effects:** After `end_time`, sets status to queued (`eta = now + applied_timelock`) or defeated, using the snapshot quorum and approval rules above.
+- **Effects:** After `end_time`, sets status to queued (`eta = end_time + applied_timelock`) or defeated, using the snapshot quorum and approval rules above. If `now` is more than 14 days after that `eta`, marks expired instead.
 - **Errors:** `no proposal`, `not active`, `voting open`.
 
 ```bash
@@ -359,15 +359,15 @@ cleos push action smartastake1 execute '{"id":1}' -p ANYACCOUNT@active
 
 ### `veto(guardian, id)`
 
-- **Auth:** `guardian`, who must be `cfg.guardian`.
-- **Effects:** While the proposal is queued, sets status to vetoed (`5`) and clears `eta`. The proposal is not applied.
-- **Errors:** `not guardian`, `no proposal`, `not queued`.
+- **Auth:** `guardian@active`, who must be `cfg.guardian`.
+- **Effects:** While the proposal is active or queued, sets status to vetoed (`5`) and clears `eta`. An airdrop veto also clears `open_airdrop_id`. The proposal is not applied.
+- **Errors:** `not guardian`, `no proposal`, `not vetoable`.
 
 ```bash
 cleos push action smartastake1 veto '{"guardian":"smartaadmin1","id":1}' -p smartaadmin1@active
 ```
 
-`veto` does not clear `open_airdrop_id`. A defeated `queue` or an `execute` that expires a still-queued airdrop does. If the guardian vetoes a queued airdrop, `open_airdrop_id` can stay set, and a later `airdrop` propose fails with `airdrop open`. Treat that as a known v1 limit: prefer letting a bad airdrop expire (call `execute` after `eta + 14 days`) rather than vetoing it, unless you have a follow-up plan to clear the slot.
+`veto` of an airdrop (active or queued) clears `open_airdrop_id`. A defeated `queue` or an expired `queue`/`execute` does too.
 
 ### `claimdrop(account, drop_id, amount, proof)`
 
@@ -468,17 +468,17 @@ Trader revenue splits (`satlp` / `leeflp` / `ops` / `rewards` / `reserve`) stay 
 
 ## Security model and known limits
 
-**Not audited yet.** A 2026-11-14 source review plus local tests (22 stake-suite checks, and an integration suite against the real `sat.token` and `leeftrader` wasm) found that balances and the invariant held, and that muldiv and merkle hashing were consistent. Governance and launch order still have limits. That work is not an external audit. Honest list:
+**Not a firm audit.** A 2026-11-14 source review plus local tests (27 stake-suite checks, and an integration suite against the real `sat.token` and `leeftrader` wasm) is in [AUDIT-2026-11-14.md](../AUDIT-2026-11-14.md). Governance and launch order still have limits. Honest list:
 
-- **First staker takes held rewards.** While `total_staked == 0`, incoming rewards are held, and the first staker of even 0.0001 SAT receives all of them. Vest claims are permissionless, so anyone could park rewards and then snipe them if the fund is not staked first. **Operational fix:** stake the airdrop fund in B2 before any reward arrives. After that, `total_staked` cannot return to zero (airdrops take at most 25% of the fund).
+- **Airdrop fund must be staked before any reward.** If `airdrop_account` is set, `reward` / funder / trader / vest-claim transfers revert with `fund not staked` until that account has a positive stake. That is the on-chain B2 check: a 0.0001 SAT sniper cannot capture parked vest claims. After the fund is in, `total_staked` cannot return to zero (airdrops take at most 25% of the fund). Empty stake rows (fully withdrawn, no pending) are erased so they do not keep consuming contract RAM.
 - **`setfunder` before retiring admin.** A rewards-stream claim uses memo `vesting claim`. Without `setfunder` for `smartavest11` (and `smartafees11` for fee forwards), those transfers revert. If the stake admin is retired first, the 23.75M stream can never be claimed.
 - **Trader payouts are always reward.** SAT from `cfg.trader` cannot create a stake row (review fix in PR #5). Prefer memo `reward` anyway, and list `smartastake1` in the trader `dests` table.
-- **Queued proposals expire.** A queued proposal that is not executed within 14 days after `eta` expires (status 6) and does not apply. This was added in PR #5 so a stale vote cannot override a newer one later.
-- **Veto of an airdrop does not clear `open_airdrop_id`.** A defeated vote or an expired execute does. If the guardian vetoes a queued airdrop, a new airdrop propose can fail with `airdrop open`. Prefer expiry over veto for airdrops unless you have another way to clear the slot.
+- **Proposals expire from `end_time + timelock`.** `eta` is `end_time + applied_timelock`. A proposal that is not queued and executed within 14 days after that `eta` expires (status 6) and does not apply, whether it was queued or left `ST_ACTIVE`.
+- **Guardian veto of an airdrop clears `open_airdrop_id`.** Veto works while the proposal is active or queued. Admin/guardian actions require the `@active` permission, not `@owner`.
 - **`setsplit` / `setlimits` need the trader patch.** Against today's `smartatrader`, execute fails (`missing authority of smartaadmin1`) until the `binary_extension<name> gov` patch and `setgov` (B5). A plain `name gov` bricks the live trader config singleton — never use that form.
 - **Just-in-time staking.** Reward lumps are distributed at once. A staker who joins immediately before a lump takes a pro-rata share and can leave after the cooldown (3–30 days, start 7). `reward_rate` / `reward_period_secs` are unused. Prefer many small reward transfers. Streaming is a v2 item.
-- **Vote weight is live stake at cast, not a snapshot** (quorum uses `snapshot_total`). The vote lock prevents unstaking that weight until the vote ends. Proposer stake is not locked. Staking more mid-vote does not raise an already-cast weight.
-- **Stake rows are paid by the contract and never erased.** Many tiny stakes can consume RAM. Unclaimed airdrop liability has no expiry or sweep.
+- **Vote weight is live stake at cast, not a snapshot** (quorum uses `snapshot_total`). The vote lock prevents unstaking that weight until the vote ends. Proposer stake is locked until `end_time` as well. Staking more mid-vote does not raise an already-cast weight.
+- **Empty stake rows are erased** after a full unstake + withdraw with no pending rewards. Live 1-unit rows are still billed to the contract. Unclaimed airdrop liability has no expiry or sweep.
 - **Guardian veto is a centralization tradeoff**, documented above. It is not full decentralization.
 
 ## User guide
@@ -538,7 +538,7 @@ Admin, fee, and airdrop-fund accounts are novote at the approved init: they earn
 
 ## Operator guide
 
-1. B0: create `smartastake1` with `eosio.code` on `active`, buy enough RAM (B0 drafts use 921,600 bytes — stake rows are billed to the contract), set the production wasm and ABI. Never deploy the test-clock wasm. Confirm the hash `dff935d9…a2ad`.
+1. B0: create `smartastake1` with `eosio.code` on `active`, buy enough RAM (B0 drafts use 921,600 bytes — stake rows are billed to the contract), set the production wasm and ABI. Never deploy the test-clock wasm. Confirm the hash `557f65fa…3d79`.
 2. B1: `init` with the approved numbers.
 3. B2: stake the airdrop fund **before** any reward. Confirm `total_staked` and the `smartadrop11` row.
 4. B3: `setfunder` for `smartavest11` and `smartafees11` before any vest claim or fee forward, and before retiring admin.
@@ -547,7 +547,7 @@ Admin, fee, and airdrop-fund accounts are novote at the approved init: they earn
 7. B6: lock `smartadrop11@active` to `smartastake1@eosio.code` only.
 8. List `smartastake1` in `smartatrader` `dests` before trader payouts.
 9. Bots should read `sat_lp_fee_share_bps` and `buyback_share_bps` from this config.
-10. Guardian: review queued proposals during the timelock, especially airdrop merkle roots. For airdrops you want to stop, prefer expiry (`execute` after the 14-day grace) over veto, because of `open_airdrop_id`.
+10. Guardian: review active and queued proposals, especially airdrop merkle roots. Veto (or expiry after the 14-day grace) both free `open_airdrop_id`.
 11. Keep contract RAM topped up. Optional later freezes (no further `setfunder`, no `setcode`) are separate, partly irreversible decisions, only after B3 and the audit.
 
 ## Deploy and launch order

@@ -14,6 +14,8 @@ Full contract guides (token, trader, vesting, staking, airdrop fund, launch orde
 
 **Audit (2026-11-09):** [AUDIT-REPORT.md](AUDIT-REPORT.md). Source matches live WASM; top risks are live key/permission centralization, 80M unissued SAT, bot `@active` bypassing `linkauth`, and a same-token `buyback`/`checkout` logic bug. Contract logic is unchanged.
 
+**Audit (2026-11-14):** [AUDIT-2026-11-14.md](AUDIT-2026-11-14.md). Source review of `smartavest` / `smartastake` plus their interaction with `sat.token` and the trader `setgov` patch. High/Medium stake-contract fixes are in this tree; vest wasm is unchanged; live `sattoken1111` / `smartatrader` were not modified.
+
 ## Reproducible build
 Requires AntelopeIO CDT **4.1.1**.
 ```bash
@@ -36,7 +38,7 @@ curl -s -d '{"account_name":"smartatrader","code_as_wasm":1}' https://wax.greyma
 
 ## smartavest (not deployed)
 
-Vesting vault in [`smartavest/`](smartavest/). **Not audited. Not deployed. Do not create a mainnet account for it.**
+Vesting vault in [`smartavest/`](smartavest/). **Not deployed.** Source-reviewed in [AUDIT-2026-11-14.md](AUDIT-2026-11-14.md) with no WASM change. Do not create a mainnet account for it until an external firm audit and owner-approved lock batches.
 
 `smartavest/sat.token/` is a local test token for `smartavest/tests/run_tests.sh` only. It is not `sattoken1111`. Do not replace `sat.token/` or `leeftrader/` with anything from `smartavest/`.
 
@@ -46,8 +48,8 @@ Design notes: [DESIGN.md](DESIGN.md). Proposed parameters: `params.proposal.json
 
 ## smartastake (not deployed)
 
-Staking and bounded governance in [`smartastake/`](smartastake/). **Not audited. Not deployed. Do not create a mainnet account for it.**
+Staking and bounded governance in [`smartastake/`](smartastake/). **Not deployed.** Source-reviewed in [AUDIT-2026-11-14.md](AUDIT-2026-11-14.md); High/Medium WASM fixes are in this tree. Do not create a mainnet account for it until an external firm audit and owner-approved lock batches.
 
 `smartastake/mocks/` is a local test token, a trader stand-in, and a tiny bios for RAM. It is not `sattoken1111` or `smartatrader`. Do not replace `sat.token/` or `leeftrader/` with anything from `smartastake/`.
 
-Local Spring 1.2.2 suite, 2026-11-09: 22 checks passed. Build with `cd smartastake && ./build.sh` (CDT 4.1.1). Production wasm has no `settime`. Checked-in ABIs: `abi/smartastake.abi`, `abi/smartastake_test.abi`. The trader still needs the `setgov` patch in [smartastake/docs/TRADER_PATCH.md](smartastake/docs/TRADER_PATCH.md) before a passed split or limit change can execute on `smartatrader`. That patch is not applied to `leeftrader/` in this commit.
+Local Spring 1.2.2 suite, 2026-11-14: 27 checks passed. Build with `cd smartastake && ./build.sh` (CDT 4.1.1). Production wasm has no `settime`. Checked-in ABIs: `abi/smartastake.abi`, `abi/smartastake_test.abi`. The trader still needs the `setgov` patch in [smartastake/docs/TRADER_PATCH.md](smartastake/docs/TRADER_PATCH.md) before a passed split or limit change can execute on `smartatrader`. That patch is not applied to `leeftrader/` in this commit.

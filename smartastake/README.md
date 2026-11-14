@@ -4,7 +4,7 @@ Staking and bounded governance for **SAT** on WAX (Antelope).
 
 Intended mainnet account: `smartastake1`. Contract name: `smartastake`. Token: `SAT` with 4 decimals, max `100000000.0000 SAT`, contract `sattoken1111`. Local tests point at a mock `sat.token`.
 
-**These contracts are not audited yet.** This tree is for local build and test only. Do not deploy it to mainnet. Do not create mainnet accounts. Do not sign mainnet transactions.
+**Not a firm audit.** Source review: [AUDIT-2026-11-14.md](../AUDIT-2026-11-14.md). This tree is for local build and test only. Do not deploy it to mainnet. Do not create mainnet accounts. Do not sign mainnet transactions.
 
 There is no admin action that withdraws user stake, cooling principal, or the reward pot. There is no `rescue` and no sweep of undistributed rewards.
 
@@ -55,7 +55,7 @@ sum(stored pending) <= reward_pot
 
 1 active-stake unit = 1 vote. Cooling does not vote. Accounts on the `novote` list earn rewards and count in `total_staked`, but they add **0** to `total_votable`, quorum, and the proposal threshold.
 
-Weight is the voter's active stake at the moment they vote, then frozen on that ballot. A second ballot on the same proposal is rejected. Voting sets `vote_lock_until` to the later of its current value and the proposal end. Unstake is rejected until that time. Staking more during a lock is allowed.
+Weight is the voter's active stake at the moment they vote, then frozen on that ballot. A second ballot on the same proposal is rejected. Voting sets `vote_lock_until` to the later of its current value and the proposal end. Proposing also locks the proposer until that proposal's `end_time`. Unstake is rejected until that time. Staking more during a lock is allowed.
 
 Lifecycle:
 
@@ -65,14 +65,14 @@ Lifecycle:
    - quorum against the snapshot: `(for + against) * 10000 >= snapshot_total * quorum_bps`
    - approval of votes cast: `for * 10000 >= (for + against) * approval_bps`
    Otherwise the proposal is defeated.
-4. On pass, `eta = now + applied_timelock`. `execute` is permissionless after `eta`.
-5. The guardian may `veto` while status is queued, before execute.
+4. On pass, `eta = end_time + applied_timelock`. `execute` is permissionless after `eta`.
+5. The guardian may `veto` while status is active or queued, before execute. An airdrop veto clears `open_airdrop_id`.
 
 Status values: `1` active, `2` defeated, `3` queued, `4` executed, `5` vetoed.
 
 ### Queued proposals expire
 
-A queued proposal must be executed within 14 days after its `eta` (`EXEC_GRACE`). A later `execute` marks it expired (status `6`), frees the open airdrop slot if it was an airdrop, and changes nothing else. A stale `setsplit`, `setlimits`, or `setcooldown` therefore cannot override a newer decision months later.
+A proposal must be queued and executed within 14 days after its `eta` (`EXEC_GRACE`), where `eta = end_time + applied_timelock`. A later `queue` or `execute` marks it expired (status `6`), frees the open airdrop slot if it was an airdrop, and changes nothing else. A stale `setsplit`, `setlimits`, or `setcooldown` therefore cannot override a newer decision months later, including a passed vote that nobody queued.
 
 ## Guardian veto is a v1 centralization tradeoff
 
@@ -155,9 +155,9 @@ Self-auth only, for Hyperion: `logstake`, `logunstake`, `logclaim`, `logreward`,
 
 ## Launch order (review 2026-11-14)
 
-These are operational requirements. The contract does not enforce them.
+These are operational requirements. Reward transfers are now rejected until the fund is staked; `setfunder` and the trader patch are still operator-enforced.
 
-1. Stake the airdrop fund (`novote`, cannot unstake) **before** any reward reaches the contract. While `total_staked == 0`, rewards are held, and the first staker of even 0.0001 SAT receives all of them. Once the fund is staked, `total_staked` can no longer reach zero, because airdrops take at most 25% of the fund.
+1. Stake the airdrop fund (`novote`, cannot unstake) **before** any reward reaches the contract. If the fund account is configured, reward transfers revert with `fund not staked` until it has a positive stake, so a 0.0001 SAT sniper cannot capture parked vest claims. Once the fund is staked, `total_staked` can no longer reach zero, because airdrops take at most 25% of the fund.
 2. `setfunder` the vest contract (`smartavest11`) and `smartafees11` **before** retiring the stake admin key. Otherwise vest claims and fee forwards to this contract revert forever.
 3. Apply the `smartatrader` patch in [docs/TRADER_PATCH.md](docs/TRADER_PATCH.md) with `binary_extension`, then `setgov`, **before** governance queues `setsplit` or `setlimits`.
 4. Reward lumps are distributed at once, so a staker who joins just before a lump gets a pro-rata share after only the cooldown. Prefer many small reward transfers over rare large ones. `reward_rate` and `reward_period_secs` are stored but not used for streaming yet.
@@ -176,8 +176,8 @@ cd smartastake
 
 `./build.sh` writes production `build/smartastake.wasm` and `build/smartastake.abi` **without** `settime`. The test clock is `-DSMARTASTAKE_TEST_CLOCK` into `build/test/` only, and the script refuses a production ABI that contains `settime`, `withdrawadmin`, or `rescue`.
 
-Production wasm sha256 (CDT 4.1.1, `-O3`, no test clock), 2026-11-09: `7aaf7c0010df315874924ca0dcf7b6995a1b20eed7aad8077ff27f56e4c5c6b4`. Checked-in ABIs are `../abi/smartastake.abi` and `../abi/smartastake_test.abi`. Wasm is not committed; rebuild to verify the hash.
+Production wasm sha256 (CDT 4.1.1, `-O3`, no test clock), 2026-11-14 audit: `557f65faa57a6cdfa500f3ae218fd45db6009314ba399ae55e16e7a90a9c3d79`. Checked-in ABIs are `../abi/smartastake.abi` and `../abi/smartastake_test.abi`. Wasm is not committed; rebuild to verify the hash.
 
 `tests/run_tests.sh` starts a throwaway local chain, runs `tests/drive.py`, and writes `tests/last-run.log`. A green run ends with `ALL TESTS PASSED`.
 
-Covered locally: stake and empty memo, cooldown reset, early withdraw, wrong token and symbol, held rewards when nobody is staked, first staker takes the held pot, claim does not touch principal, 75/25 and 30/10/40 splits, late staker does not steal prior rewards, unstake does not steal the pot, threshold, novote rewards with zero votes, 25% cap, quorum failure, double vote, vote lock, out-of-bounds split/limits/cooldown/kind/rate, timelock, model A execute that does not change `lock_secs`, unauthorized trader call, guardian veto, merkle claim once, bad proof, double claim, 7-day vote, 48h airdrop timelock, 30-day airdrop gap, and the balance invariant.
+Covered locally: stake and empty memo, cooldown reset, early withdraw, wrong token and symbol, rewards rejected until the fund is staked, tiny staker cannot take fund-era rewards, claim does not touch principal, pro-rata splits with the fund, late staker does not steal prior rewards, unstake does not steal the pot, empty row erase, threshold, novote rewards with zero votes, 25% cap, quorum failure, double vote, vote lock, proposer lock, out-of-bounds split/limits/cooldown/kind/rate, timelock, model A execute that does not change `lock_secs`, unauthorized trader call, guardian veto of active and queued airdrops clearing the slot, merkle claim once, bad proof, double claim, 7-day vote, 48h airdrop timelock, 30-day airdrop gap, unqueued proposal expiry, and the balance invariant.

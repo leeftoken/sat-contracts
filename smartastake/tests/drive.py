@@ -91,6 +91,19 @@ def stakes():
     return {row["owner"]: row for row in table("smartastake", "smartastake", "stakes")}
 
 
+def floor_share(amount, qty, total):
+    """Match contract acc math: floor(qty * SCALE / T) then floor(amount * acc / SCALE)."""
+    if total <= 0:
+        return 0
+    acc_delta = qty * SCALE // total
+    return amount * acc_delta // SCALE
+
+
+def fund_amt():
+    rows = stakes()
+    return I(rows["airdrop"]["amount"]) if "airdrop" in rows else 0
+
+
 def books(tag):
     c = cfg()
     bal = token_bal("smartastake")
@@ -384,28 +397,36 @@ def main():
     code, blob = xfer("bob", "smartastake", 1_0000, "vest", ok=False)
     if code == 0 or "memo" not in blob:
         raise SystemExit(blob)
+    code, blob = xfer("funder", "smartastake", 1_0000, "reward", ok=False)
+    if code == 0 or "fund not staked" not in blob:
+        raise SystemExit(blob)
+    say("reward funding reverts until the airdrop fund is staked")
+
+    xfer("airdrop", "smartastake", 20000_0000, "stake")
+    if I(cfg()["total_votable"]) != 0 or fund_amt() != 20000_0000:
+        raise SystemExit(cfg())
+    say("airdrop fund staked first (novote); total_staked cannot return to zero")
+
     xfer("funder", "smartastake", 1_0000, "vest")
     xfer("funder", "smartastake", 50_0000, "reward")
-    c = books("held reward")
-    if I(c["total_staked"]) != 0 or I(c["reward_pot"]) != 51_0000:
+    c = books("fund compounded parked reward")
+    grown = fund_amt() - 20000_0000
+    if grown < 51_0000 - 10 or grown > 51_0000:
+        raise SystemExit(f"fund did not compound {stakes()['airdrop']} grown {grown}")
+    if I(c["reward_pending_undistributed"]) != 0:
         raise SystemExit(c)
-    if I(c["reward_pending_undistributed"]) != 51_0000:
-        raise SystemExit(c)
-    say("reward memo and allowlisted funder memo sit undistributed when nobody is staked")
 
     xfer("alice", "smartastake", 100_0000, "stake")
     c = books("alice staked")
-    if I(c["total_staked"]) != 100_0000 or I(stakes()["alice"]["amount"]) != 100_0000:
+    if I(c["total_staked"]) != fund_amt() + 100_0000 or I(stakes()["alice"]["amount"]) != 100_0000:
         raise SystemExit(c)
-    push("smartastake", "claim", {"owner": "alice"}, "alice")
+    must_fail("smartastake", "claim", {"owner": "alice"}, "alice", "nothing to claim")
     if I(stakes()["alice"]["amount"]) != 100_0000:
         raise SystemExit("claim touched principal")
-    if I(stakes()["alice"]["pending_rewards"]) != 0 or I(cfg()["reward_pot"]) != 0:
-        raise SystemExit(cfg())
-    if token_bal("alice") != 20_000_0000 - 100_0000 + 51_0000:
+    if token_bal("alice") != 20_000_0000 - 100_0000:
         raise SystemExit(f"alice liquid {token_bal('alice')}")
-    books("after first claim")
-    say("first staker receives held rewards; claim does not touch principal")
+    books("after sniper failed to take fund rewards")
+    say("tiny late staker cannot claim rewards that arrived while only the fund was staked")
 
     push("smartastake", "unstake", {"owner": "alice", "amount": 40_0000}, "alice")
     row = stakes()["alice"]
@@ -437,19 +458,25 @@ def main():
     push("smartastake", "unstake", {"owner": "alice", "amount": 50_0000}, "alice")
     warp(T + 3 * DAY)
     push("smartastake", "withdraw", {"owner": "alice"}, "alice")
-    if I(cfg()["total_staked"]) != 0 or I(cfg()["total_cooling"]) != 0:
+    if "alice" in stakes():
+        raise SystemExit("empty stake row was not erased")
+    if I(cfg()["total_staked"]) != fund_amt() or I(cfg()["total_cooling"]) != 0:
         raise SystemExit(cfg())
-    say("full unstake and withdraw returns principal")
+    say("full unstake and withdraw returns principal and frees the stake row")
 
     xfer("alice", "smartastake", 3000_0000, "stake")
     xfer("bob", "smartastake", 1000_0000, "")
-    if I(cfg()["total_staked"]) != 4000_0000 or I(cfg()["total_votable"]) != 4000_0000:
+    if I(cfg()["total_votable"]) != 4000_0000:
+        raise SystemExit(cfg())
+    if I(cfg()["total_staked"]) != 4000_0000 + fund_amt():
         raise SystemExit(cfg())
     say("stake via memo stake and empty memo; totals match")
 
+    amts = {k: I(v["amount"]) for k, v in stakes().items()}
+    tot = sum(amts.values())
     xfer("funder", "smartastake", 100_0000, "reward")
-    if I(cfg()["reward_pot"]) != 100_0000:
-        raise SystemExit(cfg())
+    alice_share = floor_share(amts["alice"], 100_0000, tot)
+    bob_share = floor_share(amts["bob"], 100_0000, tot)
     alice_liq = token_bal("alice")
     bob_liq = token_bal("bob")
     alice_amt = I(stakes()["alice"]["amount"])
@@ -458,13 +485,13 @@ def main():
     push("smartastake", "claim", {"owner": "bob"}, "bob")
     if I(stakes()["alice"]["amount"]) != alice_amt or I(stakes()["bob"]["amount"]) != bob_amt:
         raise SystemExit("claim changed principal")
-    if token_bal("alice") != alice_liq + 75_0000 or token_bal("bob") != bob_liq + 25_0000:
+    if token_bal("alice") != alice_liq + alice_share or token_bal("bob") != bob_liq + bob_share:
         raise SystemExit(
-            f"claim split alice {token_bal('alice') - alice_liq} bob {token_bal('bob') - bob_liq}"
+            f"claim split alice {token_bal('alice') - alice_liq} bob {token_bal('bob') - bob_liq} "
+            f"want {alice_share}/{bob_share}"
         )
-    if I(cfg()["reward_pot"]) != 0:
-        raise SystemExit(cfg())
-    say("two stakers claim 75/25 of 100 SAT")
+    books("after pro-rata claim")
+    say("two stakers claim their floor share of 100 SAT; fund compounds the rest")
 
     xfer("carol", "smartastake", 4000_0000, "stake")
     if I(stakes()["carol"]["pending_rewards"]) != 0:
@@ -472,14 +499,17 @@ def main():
     must_fail("smartastake", "claim", {"owner": "carol"}, "carol", "nothing to claim")
     say("stake after reward does not steal prior rewards")
 
+    amts = {k: I(v["amount"]) for k, v in stakes().items()}
+    tot = sum(amts.values())
     xfer("funder", "smartastake", 80_0000, "reward")
     pot = I(cfg()["reward_pot"])
-    if pot != 80_0000:
-        raise SystemExit(cfg())
+    carol_pending = floor_share(amts["carol"], 80_0000, tot)
+    alice_share = floor_share(amts["alice"], 80_0000, tot)
+    bob_share = floor_share(amts["bob"], 80_0000, tot)
     push("smartastake", "unstake", {"owner": "carol", "amount": 3900_0000}, "carol")
     if I(cfg()["reward_pot"]) != pot:
         raise SystemExit("unstake stole reward pot")
-    if I(stakes()["carol"]["amount"]) != 100_0000 or I(stakes()["carol"]["pending_rewards"]) != 40_0000:
+    if I(stakes()["carol"]["amount"]) != 100_0000 or I(stakes()["carol"]["pending_rewards"]) != carol_pending:
         raise SystemExit(stakes()["carol"])
     books("unstake kept pot")
     say("unstake does not steal the reward pot")
@@ -491,9 +521,9 @@ def main():
     push("smartastake", "claim", {"owner": "bob"}, "bob")
     push("smartastake", "claim", {"owner": "carol"}, "carol")
     if (
-        token_bal("alice") != alice_liq + 30_0000
-        or token_bal("bob") != bob_liq + 10_0000
-        or token_bal("carol") != carol_liq + 40_0000
+        token_bal("alice") != alice_liq + alice_share
+        or token_bal("bob") != bob_liq + bob_share
+        or token_bal("carol") != carol_liq + carol_pending
     ):
         raise SystemExit(
             (
@@ -502,8 +532,6 @@ def main():
                 token_bal("carol") - carol_liq,
             )
         )
-    if I(cfg()["reward_pot"]) != 0:
-        raise SystemExit(cfg())
     warp(T + 3 * DAY)
     push("smartastake", "withdraw", {"owner": "carol"}, "carol")
     books("carol withdrawn")
@@ -513,21 +541,20 @@ def main():
     propose("dave", "setcooldown", p0=7 * DAY, ok=False, needle="below threshold")
     say("propose below threshold fails")
 
-    xfer("airdrop", "smartastake", 20000_0000, "stake")
-    if I(cfg()["total_votable"]) != 3000_0000 + 1000_0000 + 100_0000 + 10_0000:
-        raise SystemExit(f"airdrop stake changed votable {cfg()}")
-    if I(stakes()["airdrop"]["amount"]) != 20000_0000:
-        raise SystemExit(stakes()["airdrop"])
+    votable = 3000_0000 + 1000_0000 + 100_0000 + 10_0000
+    if I(cfg()["total_votable"]) != votable:
+        raise SystemExit(f"votable drifted {cfg()}")
     must_fail("smartastake", "unstake", {"owner": "airdrop", "amount": 1}, "airdrop", "airdrop fund is proposal-only")
     must_fail("smartastake", "claim", {"owner": "airdrop"}, "airdrop", "airdrop fund is proposal-only")
     must_fail("smartastake", "vote", {"voter": "airdrop", "id": 1, "support": True}, "airdrop", "no voting power")
     propose("airdrop", "setcooldown", p0=7 * DAY, ok=False, needle="no voting power")
     set_active("airdrop", [], code_actor="smartastake")
     must_fail("smartastake", "unstake", {"owner": "airdrop", "amount": 1}, "airdrop", "signatures")
+    cap = fund_amt() * 2500 // 10000
     propose(
         "alice",
         "airdrop",
-        amount=5000_0001,
+        amount=cap + 1,
         snapshot_time=T,
         memo="too big",
         merkle_root="11" * 32,
@@ -537,13 +564,18 @@ def main():
     say("novote fund is staked, cannot unstake, and a 25%+ airdrop is rejected")
 
     before_votable = I(cfg()["total_votable"])
+    amts = {k: I(v["amount"]) for k, v in stakes().items()}
+    tot = sum(amts.values())
+    qty = 241_1000
     alice_liq = token_bal("alice")
     bob_liq = token_bal("bob")
     carol_liq = token_bal("carol")
-    xfer("funder", "smartastake", 241_1000, "reward")
+    fund_before = fund_amt()
+    xfer("funder", "smartastake", qty, "reward")
     push("smartastake", "compound", {"account": "airdrop"}, "bob")
     row = stakes()["airdrop"]
-    if I(row["pending_rewards"]) != 0 or I(row["amount"]) != 20200_0000:
+    want_fund = fund_before + floor_share(amts["airdrop"], qty, tot)
+    if I(row["pending_rewards"]) != 0 or I(row["amount"]) != want_fund:
         raise SystemExit(row)
     if I(cfg()["total_votable"]) != before_votable:
         raise SystemExit("compound granted voting power")
@@ -553,9 +585,9 @@ def main():
     push("smartastake", "claim", {"owner": "bob"}, "bob")
     push("smartastake", "claim", {"owner": "carol"}, "carol")
     if (
-        token_bal("alice") != alice_liq + 30_0000
-        or token_bal("bob") != bob_liq + 10_0000
-        or token_bal("carol") != carol_liq + 1_0000
+        token_bal("alice") != alice_liq + floor_share(amts["alice"], qty, tot)
+        or token_bal("bob") != bob_liq + floor_share(amts["bob"], qty, tot)
+        or token_bal("carol") != carol_liq + floor_share(amts["carol"], qty, tot)
     ):
         raise SystemExit(
             (
@@ -564,9 +596,6 @@ def main():
                 token_bal("carol") - carol_liq,
             )
         )
-    # dave's 0.1000 SAT stays in the pot until he settles; novote fund took its share as stake
-    if I(cfg()["reward_pot"]) != 1000 or I(cfg()["total_staked"]) != before_votable + 20200_0000:
-        raise SystemExit(cfg())
     books("after novote reward")
     say("airdrop stake earns rewards, auto-compounds, and has zero voting power")
 
@@ -742,8 +771,56 @@ def main():
     if I(prop(second)["status"]) != 1:
         raise SystemExit(prop(second))
     execute(second, ok=False, needle="not queued")
-    books("final")
+    must_fail("smartastake", "unstake", {"owner": "alice", "amount": 1}, "alice", "vote locked")
     say("a second airdrop inside 30 days is rejected; after the gap a new one can be proposed")
+    say("proposer stake is locked until voting ends")
+
+    must_fail(
+        "smartastake",
+        "veto",
+        {"guardian": "guardian", "id": second},
+        "guardian@owner",
+        "missing authority",
+    )
+    push("smartastake", "veto", {"guardian": "guardian", "id": second}, "guardian")
+    if I(prop(second)["status"]) != 5:
+        raise SystemExit(prop(second))
+    if I(cfg()["open_airdrop_id"]) != 0:
+        raise SystemExit("veto of active airdrop left open_airdrop_id set")
+    say("guardian@active can veto an active airdrop and clears the slot; owner perm is not enough")
+
+    third = propose(
+        "alice",
+        "airdrop",
+        amount=1_0000,
+        snapshot_time=T,
+        memo="after veto",
+        merkle_root=hx(one),
+    )
+    vote("alice", third, True)
+    vote("bob", third, True)
+    warp(T + 7 * DAY)
+    queue(third)
+    if I(prop(third)["status"]) != 3 or I(cfg()["open_airdrop_id"]) != third:
+        raise SystemExit((prop(third), cfg()))
+    push("smartastake", "veto", {"guardian": "guardian", "id": third}, "guardian")
+    if I(prop(third)["status"]) != 5 or I(cfg()["open_airdrop_id"]) != 0:
+        raise SystemExit("queued airdrop veto did not free the slot")
+    say("veto of a queued airdrop clears open_airdrop_id")
+
+    stale = propose("alice", "setcooldown", p0=7 * DAY)
+    vote("alice", stale, True)
+    end = I(prop(stale)["end_time"])
+    tl = I(prop(stale)["applied_timelock"])
+    warp(end + tl + 14 * DAY + 1)
+    queue(stale)
+    if I(prop(stale)["status"]) != 6:
+        raise SystemExit(prop(stale))
+    execute(stale, ok=False, needle="not queued")
+    if I(cfg()["cooldown_secs"]) != 3 * DAY:
+        raise SystemExit("expired unqueued proposal changed cooldown")
+    books("final")
+    say("unqueued proposals expire 14 days after end+timelock; delayed queue cannot revive them")
 
     print(f"\n{passed} checks passed")
 
