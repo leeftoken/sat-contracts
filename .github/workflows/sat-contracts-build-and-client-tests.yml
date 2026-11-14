@@ -1,0 +1,53 @@
+name: sat-contracts-build-and-client-tests
+on:
+  pull_request:
+    paths:
+      - '**/*.cpp'
+      - '**/*.hpp'
+      - '**/*.h'
+      - '**/*.sh'
+      - 'abi/**'
+      - 'client/**'
+      - '.github/workflows/sat-contracts-build-and-client-tests.yml'
+  push:
+    branches:
+      - '**'
+    paths:
+      - '**/*.cpp'
+      - '**/*.hpp'
+      - '**/*.h'
+      - '**/*.sh'
+      - 'abi/**'
+      - 'client/**'
+      - '.github/workflows/sat-contracts-build-and-client-tests.yml'
+permissions:
+  contents: read
+concurrency:
+  group: sat-contracts-ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build-and-test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install pinned Antelope CDT
+        run: |
+          curl --fail --location --retry 3 \
+            https://github.com/AntelopeIO/cdt/releases/download/v4.1.1/cdt_4.1.1_amd64.deb \
+            --output /tmp/cdt_4.1.1_amd64.deb
+          sudo apt-get update
+          sudo apt-get install --yes /tmp/cdt_4.1.1_amd64.deb
+          cdt-cpp --version
+      - name: Build production SAT token and trader contracts
+        run: ./build.sh
+      - name: Build SAT staking contract and test-clock variant
+        working-directory: smartastake
+        run: ./build.sh
+      - name: Build SAT vesting contract and test-clock variant
+        working-directory: smartavest
+        run: ./build.sh
+      - name: Test trader client action serialization and safety helpers
+        run: node client/leeftrader-client.test.mjs
