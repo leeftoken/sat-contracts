@@ -109,32 +109,32 @@ sleep 0.6; DESC="relist LEEF"; ok $C push action -f leeftrader settoken '[{"sym"
 echo "== buyback guards"
 $C push action -f swap.mock setout '[{"quantity":"5000.0000 SAT","contract":"sat.token"},{"quantity":"1.0000 SAT","contract":"sat.token"}]' -p swap.mock >/dev/null
 DESC="buyback by non-bot rejected"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"4000.0000 SAT","contract":"sat.token"}]' -p alice
-DESC="buyback via non-whitelisted swap rejected"; EXPECT="not whitelisted"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"bob","1",{"quantity":"4000.0000 SAT","contract":"sat.token"}]' -p botacct
-DESC="buyback with injected memo path rejected"; EXPECT="digits and commas"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1#bob",{"quantity":"4000.0000 SAT","contract":"sat.token"}]' -p botacct
-DESC="buyback above bucket balance rejected"; EXPECT="too low"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"999.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"1.0000 SAT","contract":"sat.token"}]' -p botacct
-DESC="buyback reverts when output below min_out"; EXPECT="below min_out"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"6000.0000 SAT","contract":"sat.token"}]' -p botacct
-DESC="same-token loop needs min_out >= in + 1 unit"; EXPECT="in + 1"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"100.00000000 WAX","contract":"wax.mock"}]' -p botacct
+DESC="buyback via non-whitelisted swap rejected"; EXPECT="not whitelisted"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"bob","1",{"quantity":"4000.0000 SAT","contract":"sat.token"}]' -p botacct@bot
+DESC="buyback with injected memo path rejected"; EXPECT="digits and commas"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1#bob",{"quantity":"4000.0000 SAT","contract":"sat.token"}]' -p botacct@bot
+DESC="buyback above bucket balance rejected"; EXPECT="too low"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"999.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"1.0000 SAT","contract":"sat.token"}]' -p botacct@bot
+DESC="buyback reverts when output below min_out"; EXPECT="below min_out"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"6000.0000 SAT","contract":"sat.token"}]' -p botacct@bot
+DESC="same-token loop needs min_out >= in + 1 unit"; EXPECT="in + 1"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"100.00000000 WAX","contract":"wax.mock"}]' -p botacct@bot
 # H-02: checkout records the token balance BEFORE sending `in`, so a same-token
 # swap that returns in+1 is measured as net +1 and fails min_out. Restore SAT
 # setout afterwards so later cases keep the original mock output.
 $C push action -f swap.mock setout '[{"quantity":"101.00000000 WAX","contract":"wax.mock"},{"quantity":"1.0000 SAT","contract":"sat.token"}]' -p swap.mock >/dev/null
-DESC="same-token profitable loop succeeds using gross output"; ok $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"101.00000000 WAX","contract":"wax.mock"}]' -p botacct
+DESC="same-token profitable loop succeeds using gross output"; ok $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"101.00000000 WAX","contract":"wax.mock"}]' -p botacct@bot
 DESC="same-token checkout credits gross output after spend; net bucket gain is 1 WAX"; ok bash -c "$C get table leeftrader satlp buckets | grep -q '301.00000000 WAX'"
 $C push action -f swap.mock setout '[{"quantity":"5000.0000 SAT","contract":"sat.token"},{"quantity":"1.0000 SAT","contract":"sat.token"}]' -p swap.mock >/dev/null
-DESC="buyback through non-whitelisted pool rejected"; EXPECT="pool not whitelisted"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1,99",{"quantity":"4000.0000 SAT","contract":"sat.token"}]' -p botacct
-DESC="min_out on a fake contract with the same symbol rejected"; EXPECT="output token not whitelisted"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"4000.0000 SAT","contract":"leef.mock"}]' -p botacct
-DESC="valid buyback: 100 WAX -> 5000 SAT credited to satlp"; ok $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"4000.0000 SAT","contract":"sat.token"}]' -p botacct
+DESC="buyback through non-whitelisted pool rejected"; EXPECT="pool not whitelisted"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1,99",{"quantity":"4000.0000 SAT","contract":"sat.token"}]' -p botacct@bot
+DESC="min_out on a fake contract with the same symbol rejected"; EXPECT="output token not whitelisted"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"4000.0000 SAT","contract":"leef.mock"}]' -p botacct@bot
+DESC="valid buyback: 100 WAX -> 5000 SAT credited to satlp"; ok $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"4000.0000 SAT","contract":"sat.token"}]' -p botacct@bot
 DESC="satlp now holds 5000.0000 SAT"; ok bash -c "$C get table leeftrader satlp buckets | grep -q '5000.0000 SAT'"
 
 echo "== LP + native lock"
-DESC="addlp into non-whitelisted pool rejected"; EXPECT="pool not whitelisted"; no $C push action -f leeftrader addlp '["satlp",99,{"quantity":"50.00000000 WAX","contract":"wax.mock"},{"quantity":"2500.0000 SAT","contract":"sat.token"},-1000,1000,"1.00000000 WAX","1.0000 SAT"]' -p botacct
-DESC="addlp with zero min amounts rejected"; EXPECT="min amounts"; no $C push action -f leeftrader addlp '["satlp",7,{"quantity":"50.00000000 WAX","contract":"wax.mock"},{"quantity":"2500.0000 SAT","contract":"sat.token"},-1000,1000,"0.00000000 WAX","0.0000 SAT"]' -p botacct
-DESC="addlp mints position owned by leeftrader and locks it ~42y"; ok $C push action -f leeftrader addlp '["satlp",7,{"quantity":"50.00000000 WAX","contract":"wax.mock"},{"quantity":"2500.0000 SAT","contract":"sat.token"},-1000,1000,"1.00000000 WAX","1.0000 SAT"]' -p botacct
+DESC="addlp into non-whitelisted pool rejected"; EXPECT="pool not whitelisted"; no $C push action -f leeftrader addlp '["satlp",99,{"quantity":"50.00000000 WAX","contract":"wax.mock"},{"quantity":"2500.0000 SAT","contract":"sat.token"},-1000,1000,"1.00000000 WAX","1.0000 SAT"]' -p botacct@bot
+DESC="addlp with zero min amounts rejected"; EXPECT="min amounts"; no $C push action -f leeftrader addlp '["satlp",7,{"quantity":"50.00000000 WAX","contract":"wax.mock"},{"quantity":"2500.0000 SAT","contract":"sat.token"},-1000,1000,"0.00000000 WAX","0.0000 SAT"]' -p botacct@bot
+DESC="addlp mints position owned by leeftrader and locks it ~42y"; ok $C push action -f leeftrader addlp '["satlp",7,{"quantity":"50.00000000 WAX","contract":"wax.mock"},{"quantity":"2500.0000 SAT","contract":"sat.token"},-1000,1000,"1.00000000 WAX","1.0000 SAT"]' -p botacct@bot
 DESC="mock position unlock is >= 41 years ahead"; ok bash -c "u=\$($C get table swap.mock swap.mock positions | python3 -c 'import json,sys;print(json.load(sys.stdin)[\"rows\"][0][\"unlock\"])'); [ \$((u - \$(date +%s))) -gt 1293000000 ]"
 DESC="locked position cannot be removed (subliquid)"; EXPECT="locked"; no $C push action -f swap.mock subliquid '[7,"leeftrader",1,-1000,1000,"0.00000000 WAX","0.0000 SAT",0]' -p leeftrader
 DESC="leeftrader ABI has no subliquid / transferpos action"; ok bash -c "! $C get abi leeftrader | grep -qE '\"(subliquid|transferpos|withdrawlp)\"'"
 B0=$(bal sat.token teamfees SAT)
-DESC="collectfees by bot sends fees to fee recipient only"; ok $C push action -f leeftrader collectfees '["botacct",0,"1000.00000000 WAX","1000.0000 SAT"]' -p botacct
+DESC="collectfees by bot sends fees to fee recipient only"; ok $C push action -f leeftrader collectfees '["botacct",0,"1000.00000000 WAX","1000.0000 SAT"]' -p botacct@bot
 DESC="teamfees received 1.0000 SAT"; ok bash -c "[ \"\$($C get currency balance sat.token teamfees SAT)\" = '1.0000 SAT' ]"
 DESC="collectfees by outsider rejected"; no $C push action -f leeftrader collectfees '["alice",0,"1.00000000 WAX","1.0000 SAT"]' -p alice
 
@@ -145,12 +145,12 @@ DESC="trading account cannot be whitelisted as destination"; EXPECT="trading acc
 DESC="admin whitelists opswallet"; ok $C push action -f leeftrader setdest '["opswallet",true]' -p adminmsig@active
 DESC="admin active permission can payout to whitelisted opswallet"; ok $C push action -f leeftrader payout '["ops","opswallet",{"quantity":"1.00000000 WAX","contract":"wax.mock"},"ops"]' -p adminmsig@active
 DESC="bot active permission cannot bypass dedicated bot permission"; no $C push action -f leeftrader pause '["botacct",true]' -p botacct@active
-DESC="bot child permission can pause"; ok $C push action -f leeftrader pause '["botacct",true]' -p botacct
-DESC="paused contract rejects buyback"; EXPECT="paused"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"1.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"1.0000 SAT","contract":"sat.token"}]' -p botacct
-DESC="bot cannot unpause"; EXPECT="not allowed"; no $C push action -f leeftrader pause '["botacct",false]' -p botacct
+DESC="bot child permission can pause"; ok $C push action -f leeftrader pause '["botacct",true]' -p botacct@bot
+DESC="paused contract rejects buyback"; EXPECT="paused"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"1.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"1.0000 SAT","contract":"sat.token"}]' -p botacct@bot
+DESC="bot cannot unpause"; EXPECT="not allowed"; no $C push action -f leeftrader pause '["botacct",false]' -p botacct@bot
 DESC="admin unpauses"; ok $C push action -f leeftrader pause '["adminmsig",false]' -p adminmsig@active
 DESC="admin sets 5% per-action / 20% daily caps"; ok $C push action -f leeftrader setlimits '[500,2000,1325419200]' -p adminmsig@active
-DESC="buyback over 5% of bucket rejected"; EXPECT="per-action cap"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"1.0000 SAT","contract":"sat.token"}]' -p botacct
+DESC="buyback over 5% of bucket rejected"; EXPECT="per-action cap"; no $C push action -f leeftrader buyback '["satlp",{"quantity":"100.00000000 WAX","contract":"wax.mock"},"swap.mock","1",{"quantity":"1.0000 SAT","contract":"sat.token"}]' -p botacct@bot
 
 echo; echo "RESULT: $PASS passed, $FAIL failed"
 [ $FAIL -eq 0 ]
