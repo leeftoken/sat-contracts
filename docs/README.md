@@ -1,8 +1,28 @@
 # SAT contract guides
 
+## Live status (checked on-chain 2026-11-21)
+
+The SAT lock batches B0a–B6 were signed by the 2-of-3 admin multisig and executed on WAX mainnet on 14 Nov 2026, 19:02–19:19 CET. **SAT is still not independently audited.** The 2026-11-14 review is an internal source review, not a firm audit.
+
+| Account | Code hash (sha256) on mainnet | Source |
+|---|---|---|
+| `sattoken1111` | `e1702842a5cc049c592abc92aabfbd2e02325c709b401629f5b3634d2dcf7dbc` | `sat.token/` before PR #8 (PR #8's exact-`@active` issuer check is in `main` but **not deployed**) |
+| `smartatrader` | `0a48f389ed1a921b93393278102cc63ac83ba77e87e21352e63ee158581fabb4` | `leeftrader/` at `385f945` plus the `setgov` patch (`integration/make_trader_patches.py`). PR #8's trader changes are in `main` but **not deployed** |
+| `smartavest11` | `b6166eae6560e8bc43ac2bafed01ec58e7476fa30e297ddbe4c85074a54ae532` | `smartavest/` (unchanged in `main`) |
+| `smartastake1` | `557f65faa57a6cdfa500f3ae218fd45db6009314ba399ae55e16e7a90a9c3d79` | `smartastake/` at `76dd2f8` (PR #7; unchanged in `main`) |
+| `smartadrop11` | no code (zero hash) | Airdrop fund; `active` is `smartastake1@eosio.code` only |
+
+- Supply: `100000000.0000 SAT` issued of `100000000.0000 SAT` max (issuer `smartaadmin1`). Nothing more can be minted.
+- Vesting streams in `smartavest11` (all started 2026-11-14 19:16 CET): 0 `lpreserve` 25,000,000 SAT to `smartaadmin1` over 4 years; 1 `rewards` 23,750,000 SAT to `smartastake1` over 4 years; 2 `treasury` 15,000,000 SAT to `smartaadmin1` over 4 years; 3 `team` 15,000,000 SAT to `smartaadmin1`, 12-month cliff then 36 months linear.
+- Staking (`smartastake1`): cooldown 7 days (adjustable 3–30 by vote), proposal threshold 10,000 SAT, quorum 10%, approval 50%, voting 3 days, timelock 2 days, guardian `smartaadmin1`, SAT LP fee share 50%, buyback share 0. Funders: `smartavest11`, `smartafees11`. The 1,250,000 SAT airdrop fund is staked as `smartadrop11` (novote, proposal-only).
+- `smartatrader.config.gov` = `smartastake1`.
+
+**Rewards only reach stakers when someone calls `smartavest11::claim(1)`.** The action is permissionless and always pays `smartastake1`; the transfer is booked as rewards and distributed pro rata in one step. Until it is called, `reward_pot` stays 0. Call it regularly (for example daily) so rewards arrive in small steps.
+
+
 This folder is the full guide set for the Smart Ass Trading (SAT) contracts on WAX (Antelope).
 
-**SAT is not audited yet.** `smartavest` and `smartastake` are written, tested locally, and **not deployed**. Do not create the mainnet accounts, do not mint the remaining supply, and do not sign the lock batches until an external audit is complete and the owner has approved each batch. This documentation is not a signing approval.
+**SAT is not audited yet.** `smartavest` and `smartastake` were deployed on 14 Nov 2026 by owner-approved multisig batches without an independent audit. See *Live status* above.
 
 These guides describe contract behaviour on [leeftoken/sat-contracts](https://github.com/leeftoken/sat-contracts) `main` after [PR #5](https://github.com/leeftoken/sat-contracts/pull/5) (review fixes, commit `385f945`). They add documentation only. They do not change contract code, tests, or audit files.
 
@@ -10,9 +30,9 @@ These guides describe contract behaviour on [leeftoken/sat-contracts](https://gi
 |---|---|---|
 | [sat.token.md](sat.token.md) | `sattoken1111` | **LIVE.** Account exists. Contract deployed. On-chain code hash matches this repo (verified 2026-11-14). |
 | [leeftrader.md](leeftrader.md) | `smartatrader` | **LIVE.** Account exists. Contract deployed. On-chain code hash matches this repo (verified 2026-11-14). A later `setgov` patch is required before staking governance can change splits or caps. |
-| [smartavest.md](smartavest.md) | `smartavest11` | **PLANNED.** Account does not exist on mainnet. Built locally, not deployed, not audited. |
-| [smartastake.md](smartastake.md) | `smartastake1` | **PLANNED.** Account does not exist on mainnet. Built locally, not deployed, not audited. |
-| [airdrop-fund.md](airdrop-fund.md) | `smartadrop11` | **PLANNED.** Account does not exist on mainnet. The fund is a staked, no-vote SAT account inside `smartastake`, not its own contract. |
+| [smartavest.md](smartavest.md) | `smartavest11` | **LIVE** since 14 Nov 2026. Not audited. |
+| [smartastake.md](smartastake.md) | `smartastake1` | **LIVE** since 14 Nov 2026. Not audited. |
+| [airdrop-fund.md](airdrop-fund.md) | `smartadrop11` | **LIVE** since 14 Nov 2026: 1,250,000 SAT staked, no-vote, inside `smartastake1`. Not its own contract. |
 
 Related older notes, kept as planning history (the 2026-11-14 decisions below supersede draft numbers where they differ):
 
@@ -75,12 +95,12 @@ flowchart TB
 | `smartaadmin1` | 2-of-3 admin multisig. Token issuer, vest admin, stake admin and guardian, team / treasury / LP-reserve beneficiary. Signers: `danishcrypto@active`, `smart.ass@active`, `leef@active`, threshold 2, weight 1 each. |
 | `smartafees11` | Fee recipient (same 2-of-3 pattern). Whitelisted payout target. Will be a staking funder so it can forward SAT as rewards. |
 | `smartabot111` | The only bot actor on `smartatrader`. Cannot be a trading account. May pause, not unpause. |
-| `smartavest11` | Vesting vault (planned). |
-| `smartastake1` | Staking and governance (planned). |
-| `smartadrop11` | Airdrop fund account (planned). No contract code. Stakes into `smartastake1`. |
+| `smartavest11` | Vesting vault (live). |
+| `smartastake1` | Staking and governance (live). |
+| `smartadrop11` | Airdrop fund account (live). No contract code. Staked in `smartastake1`. |
 | `swap.alcor` | Alcor swap and CLMM. Locked positions cannot be removed through `smartatrader` (the contract has no `subliquid`). |
 
-Mainnet existence, verified 2026-11-14 from public WAX RPC (`get_account` / `get_code_hash`). `smartavest11`, `smartastake1`, and `smartadrop11` are names reserved for later deploy; they are not live.
+Mainnet existence as verified on 2026-11-14 *before* the lock batches ran. For current state see *Live status* above.
 
 | Account | Exists? | Code? | Code hash (sha256) | Notes |
 |---|---|---|---|---|

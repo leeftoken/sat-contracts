@@ -4,7 +4,7 @@
 
 Staking and bounded governance for SAT on WAX. Users stake SAT, earn a pro-rata share of the reward pot, and vote on a fixed list of proposal kinds. An airdrop fund (`smartadrop11`) is a special no-vote stake that cannot unstake; stakers vote on merkle airdrops paid from that fund.
 
-**Not deployed.** Source: `smartastake/smartastake/smartastake.cpp`. Planned account: `smartastake1`. Planned production wasm sha256 (CDT 4.1.1, `-O3`, no test clock, after the 2026-11-14 audit): `557f65faa57a6cdfa500f3ae218fd45db6009314ba399ae55e16e7a90a9c3d79`. Rebuild to verify. Production ABI: `abi/smartastake.abi` (no `settime`). The test clock build is `abi/smartastake_test.abi` only. See [AUDIT-2026-11-14.md](../AUDIT-2026-11-14.md).
+**Live on WAX mainnet as `smartastake1` since 14 Nov 2026. Not audited.** Source: `smartastake/smartastake/smartastake.cpp`. Production wasm sha256 (matches mainnet) (CDT 4.1.1, `-O3`, no test clock, after the 2026-11-14 audit): `557f65faa57a6cdfa500f3ae218fd45db6009314ba399ae55e16e7a90a9c3d79`. Rebuild to verify. Production ABI: `abi/smartastake.abi` (no `settime`). The test clock build is `abi/smartastake_test.abi` only. See [AUDIT-2026-11-14.md](../AUDIT-2026-11-14.md).
 
 There is no admin action that withdraws user stake, cooling principal, or the reward pot. There is no `rescue` and no sweep of undistributed rewards.
 

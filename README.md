@@ -8,7 +8,11 @@ Full contract guides (token, trader, vesting, staking, airdrop fund, launch orde
 | Account | Source | Deployed code hash (sha256) |
 |---|---|---|
 | `sattoken1111` | `sat.token/sat.token.cpp` | `e1702842a5cc049c592abc92aabfbd2e02325c709b401629f5b3634d2dcf7dbc` |
-| `smartatrader` | `leeftrader/leeftrader.cpp` | `4ed7d02a7f7107dc03d9c9df61b77fd4927368ea95b669e0d0ba228f1ee729c4` |
+| `smartatrader` | `leeftrader/leeftrader.cpp` + `setgov` patch | `0a48f389ed1a921b93393278102cc63ac83ba77e87e21352e63ee158581fabb4` |
+| `smartavest11` | `smartavest/smartavest/smartavest.cpp` | `b6166eae6560e8bc43ac2bafed01ec58e7476fa30e297ddbe4c85074a54ae532` |
+| `smartastake1` | `smartastake/smartastake/smartastake.cpp` | `557f65faa57a6cdfa500f3ae218fd45db6009314ba399ae55e16e7a90a9c3d79` |
+
+The SAT lock (batches B0a–B6) executed on 14 Nov 2026: all 100M SAT is issued, and the vesting, staking and airdrop-fund accounts are live. PR #8 (exact-permission checks for `sat.token` and `leeftrader`) is merged in `main` but **not deployed**, so `main` no longer rebuilds to the live `sattoken1111` / `smartatrader` hashes. Full live status: [docs/README.md](docs/README.md#live-status-checked-on-chain-2026-11-21).
 
 `mocks/mockswap` is a test stand-in for `swap.alcor` and is not deployed on mainnet.
 
@@ -36,9 +40,9 @@ curl -s -d '{"account_name":"smartatrader","code_as_wasm":1}' https://wax.greyma
 - `client/`: JS client helpers + `node client/leeftrader-client.test.mjs`.
 
 
-## smartavest (not deployed)
+## smartavest (live as `smartavest11`)
 
-Vesting vault in [`smartavest/`](smartavest/). **Not deployed.** Source-reviewed in [AUDIT-2026-11-14.md](AUDIT-2026-11-14.md) with no WASM change. Do not create a mainnet account for it until an external firm audit and owner-approved lock batches.
+Vesting vault in [`smartavest/`](smartavest/). **Live since 14 Nov 2026, not audited.** Source-reviewed in [AUDIT-2026-11-14.md](AUDIT-2026-11-14.md) with no WASM change. `claim(id)` is permissionless; `claim(1)` moves vested user rewards into `smartastake1`.
 
 `smartavest/sat.token/` is a local test token for `smartavest/tests/run_tests.sh` only. It is not `sattoken1111`. Do not replace `sat.token/` or `leeftrader/` with anything from `smartavest/`.
 
@@ -46,10 +50,10 @@ Local Spring 1.2.2 suite, 2026-11-09: 83 passed, 0 failed. Build with `cd smarta
 
 Design notes: [DESIGN.md](DESIGN.md). Proposed parameters: `params.proposal.json`.
 
-## smartastake (not deployed)
+## smartastake (live as `smartastake1`)
 
-Staking and bounded governance in [`smartastake/`](smartastake/). **Not deployed.** Source-reviewed in [AUDIT-2026-11-14.md](AUDIT-2026-11-14.md); High/Medium WASM fixes are in this tree. Do not create a mainnet account for it until an external firm audit and owner-approved lock batches.
+Staking and bounded governance in [`smartastake/`](smartastake/). **Live since 14 Nov 2026, not audited.** Source-reviewed in [AUDIT-2026-11-14.md](AUDIT-2026-11-14.md); the deployed wasm includes the High/Medium fixes.
 
 `smartastake/mocks/` is a local test token, a trader stand-in, and a tiny bios for RAM. It is not `sattoken1111` or `smartatrader`. Do not replace `sat.token/` or `leeftrader/` with anything from `smartastake/`.
 
-Local Spring 1.2.2 suite, 2026-11-14: 27 checks passed. Build with `cd smartastake && ./build.sh` (CDT 4.1.1). Production wasm has no `settime`. Checked-in ABIs: `abi/smartastake.abi`, `abi/smartastake_test.abi`. The trader still needs the `setgov` patch in [smartastake/docs/TRADER_PATCH.md](smartastake/docs/TRADER_PATCH.md) before a passed split or limit change can execute on `smartatrader`. That patch is not applied to `leeftrader/` in this commit.
+Local Spring 1.2.2 suite, 2026-11-14: 27 checks passed. Build with `cd smartastake && ./build.sh` (CDT 4.1.1). Production wasm has no `settime`. Checked-in ABIs: `abi/smartastake.abi`, `abi/smartastake_test.abi`. The trader still needs the `setgov` patch in [smartastake/docs/TRADER_PATCH.md](smartastake/docs/TRADER_PATCH.md) before a passed split or limit change can execute on `smartatrader`. That patch is applied on mainnet (`smartatrader` hash `0a48f389…`) but is not merged into `leeftrader/` in this tree.
