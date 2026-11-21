@@ -13,7 +13,7 @@ Once staked, the fund:
 - **Cannot** `unstake`, `withdraw`, or `claim`. Those actions revert with `airdrop fund is proposal-only`.
 - Pays future airdrops only through a passed governance proposal of kind `airdrop`, after which recipients call `claimdrop` with a merkle proof.
 
-**Account not created.** The stake contract that enforces this is not deployed. A 2026-11-14 source review is in [AUDIT-2026-11-14.md](../AUDIT-2026-11-14.md); signing the seed-and-stake batch still waits for an external firm audit.
+**Live since 14 Nov 2026.** 1,250,000.0000 SAT is staked as `smartadrop11` in `smartastake1` (batch B2), and the account was frozen to `smartastake1@eosio.code` (batch B6). Not audited; see [AUDIT-2026-11-14.md](../AUDIT-2026-11-14.md).
 
 ## Accounts and permissions
 
