@@ -11,11 +11,11 @@ Standard eosio.token-compatible SAT token on WAX. Wallets, Alcor, and explorers 
 | Symbol | `SAT`, precision 4 |
 | Max supply | `100000000.0000 SAT` (fixed, no inflation) |
 | Issued today | `20000000.0000 SAT` |
-| Still mintable today | `80000000.0000 SAT` |
+| Still mintable today | `0.0000 SAT` (all 100M issued on 14 Nov 2026) |
 | Issuer | `smartaadmin1` |
 | After the approved lock batches | Supply equals max supply; nothing left to mint |
 
-The remaining 80M is the lock plan in [README.md](README.md#approved-allocation-2026-11-14). Issuing it waits for an external audit and owner approval of each batch.
+The remaining 80M was issued on 14 Nov 2026 by the owner-approved lock batches in [README.md](README.md#approved-allocation-2026-11-14), without an independent audit. Supply now equals max supply.
 
 ## Accounts and permissions
 
@@ -213,4 +213,4 @@ cleos -u https://wax.greymass.com get currency balance sattoken1111 YOURACCOUNT 
 
 ## Deploy and launch order
 
-`sattoken1111` is already live (`create` and the first `20000000.0000 SAT` issued). That 20M is the 10% community allocation (9,999,999.9635 SAT sent on 2026-11-09; 0.0365 SAT still in `smartaadmin1`) plus the SAT deposited into locked Alcor position 153128 (a CLMM position, so the SAT balance in the position is no longer a flat 10M; see [README.md](README.md#approved-allocation-2026-11-14)). The remaining issuance is B2 then B4, after the audit, as listed in the [system overview](README.md#deploy-and-launch-order).
+`sattoken1111` is already live (`create` and the first `20000000.0000 SAT` issued). That 20M is the 10% community allocation (9,999,999.9635 SAT sent on 2026-11-09; 0.0365 SAT still in `smartaadmin1`) plus the SAT deposited into locked Alcor position 153128 (a CLMM position, so the SAT balance in the position is no longer a flat 10M; see [README.md](README.md#approved-allocation-2026-11-14)). The remaining issuance ran as B2 then B4 on 14 Nov 2026 (owner-approved, not independently audited), as listed in the [system overview](README.md#deploy-and-launch-order).
