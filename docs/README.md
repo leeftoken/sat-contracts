@@ -17,7 +17,7 @@ The SAT lock batches B0a–B6 were signed by the 2-of-3 admin multisig and execu
 - Staking (`smartastake1`): cooldown 7 days (adjustable 3–30 by vote), proposal threshold 10,000 SAT, quorum 10%, approval 50%, voting 3 days, timelock 2 days, guardian `smartaadmin1`, SAT LP fee share 50%, buyback share 0. Funders: `smartavest11`, `smartafees11`. The 1,250,000 SAT airdrop fund is staked as `smartadrop11` (novote, proposal-only).
 - `smartatrader.config.gov` = `smartastake1`.
 
-**Rewards only reach stakers when someone calls `smartavest11::claim(1)`.** The action is permissionless and always pays `smartastake1`; the transfer is booked as rewards and distributed pro rata in one step. Until it is called, `reward_pot` stays 0. Call it regularly (for example daily) so rewards arrive in small steps.
+**Rewards only reach stakers when someone calls `smartavest11::claim(1)`.** The action is permissionless and always pays `smartastake1`; the transfer is booked as rewards and distributed pro rata in one step. Until it is called, unlocked rewards stay in the vesting contract. Since 21 Nov 2026 the project keeper bot calls it about once a day (when at least 5,000 SAT is claimable), so rewards arrive in small steps. Anyone else may call it too.
 
 
 This folder is the full guide set for the Smart Ass Trading (SAT) contracts on WAX (Antelope).
@@ -45,13 +45,13 @@ Related older notes, kept as planning history (the 2026-11-14 decisions below su
 
 ## System overview
 
-SAT is a fixed-supply token (100,000,000.0000 SAT, 4 decimals, no inflation). The token contract is `sattoken1111`; the issuer account (the only account that can `issue` or `retire`) is `smartaadmin1`. Live today: `20000000.0000 SAT` is issued and `80000000.0000 SAT` remains mintable. That 20M is the 10% community allocation plus the SAT that was deposited into locked Alcor position 153128 (see the allocation table; the SAT amount still sitting in that CLMM position moves with price).
+SAT is a fixed-supply token (100,000,000.0000 SAT, 4 decimals, no inflation). The token contract is `sattoken1111`; the issuer account (the only account that can `issue` or `retire`) is `smartaadmin1`. Since the lock batches of 14 Nov 2026, all `100000000.0000 SAT` is issued and nothing more can be minted. The first 20M was the 10% community allocation plus the SAT deposited into locked Alcor position 153128 (see the allocation table; the SAT amount still sitting in that CLMM position moves with price). The remaining 80M was issued in batches B2 (the 1.25M airdrop fund) and B4 (the 78.75M in the four vesting streams).
 
 `smartatrader` (source: `leeftrader/`) is the live treasury and automation guard. It splits incoming revenue into buckets, lets one bot account run capped buybacks, locked LP adds, fee collection and whitelisted payouts, and is configured by a 2-of-3 admin multisig.
 
-`smartavest11` will hold the long-dated SAT streams (locked-LP reserve, staking rewards, treasury, team). Anyone may call `claim`, and the contract always pays the stream's fixed beneficiary. There is no withdraw, revoke, pause, or beneficiary change.
+`smartavest11` holds the long-dated SAT streams (locked-LP reserve, staking rewards, treasury, team). Anyone may call `claim`, and the contract always pays the stream's fixed beneficiary. There is no withdraw, revoke, pause, or beneficiary change.
 
-`smartastake1` will hold user SAT stakes, pay staking rewards, and run bounded governance. `smartadrop11` is the future-airdrop fund: 1,250,000 SAT staked at genesis, no voting power, cannot unstake. Stakers vote on airdrops from that fund. After a trader `setgov` patch, passed votes can also change the trader's revenue split and per-action caps, inside hard bounds.
+`smartastake1` holds user SAT stakes, pay staking rewards, and run bounded governance. `smartadrop11` is the future-airdrop fund: 1,250,000 SAT staked at genesis, no voting power, cannot unstake. Stakers vote on airdrops from that fund. After a trader `setgov` patch, passed votes can also change the trader's revenue split and per-action caps, inside hard bounds.
 
 ### Accounts and flows
 

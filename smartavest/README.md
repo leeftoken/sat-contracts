@@ -1,5 +1,5 @@
 > Lives in [leeftoken/sat-contracts](https://github.com/leeftoken/sat-contracts) under `smartavest/`.
-> **Not audited. Not deployed.** `sat.token/` in this directory is a local test token only.
+> **Not audited. Live on WAX mainnet as `smartavest11` since 14 Nov 2026.** `sat.token/` in this directory is a local test token only.
 > The deployed SAT token is the repo-root `sat.token/` (`sattoken1111`). Do not mix them.
 
 # smartavest — SAT vesting vault
