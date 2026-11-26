@@ -12,7 +12,7 @@ Full contract guides (token, trader, vesting, staking, airdrop fund, launch orde
 | `smartavest11` | `smartavest/smartavest/smartavest.cpp` | `b6166eae6560e8bc43ac2bafed01ec58e7476fa30e297ddbe4c85074a54ae532` |
 | `smartastake1` | `smartastake/smartastake/smartastake.cpp` | `557f65faa57a6cdfa500f3ae218fd45db6009314ba399ae55e16e7a90a9c3d79` |
 
-The SAT lock (batches B0a–B6) executed on 14 Nov 2026: all 100M SAT is issued, and the vesting, staking and airdrop-fund accounts are live. PR #8 (exact-permission checks for `sat.token` and `leeftrader`) is merged in `main` but **not deployed**, so `main` no longer rebuilds to the live `sattoken1111` / `smartatrader` hashes. Full live status: [docs/README.md](docs/README.md#live-status-checked-on-chain-2026-11-21).
+**Live-chain status requires reconciliation before any operational decision.** The checked-in documents currently disagree: this README records 100M SAT issued and lists `smartatrader` hash `0a48f389…`, while [AUDIT-2026-11-14.md](AUDIT-2026-11-14.md) records 80M SAT mint headroom and lists `smartatrader` hash `4ed7d02a…`. The 14 Nov audit also labels the new vesting/staking deployments as planned, while this README labels them live. These claims must not be treated as verified until the current WAX mainnet token stats, account code hashes, account permissions, and deployed ABIs are fetched and recorded together. See [CHAIN-STATE-RECONCILIATION.md](CHAIN-STATE-RECONCILIATION.md). PR #8 (exact-permission checks for `sat.token` and `leeftrader`) is merged in `main` but **not deployed**; do not infer that `main` rebuilds to the live `sattoken1111` / `smartatrader` hashes.
 
 `mocks/mockswap` is a test stand-in for `swap.alcor` and is not deployed on mainnet.
 
